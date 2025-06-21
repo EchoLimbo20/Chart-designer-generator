@@ -1,25 +1,33 @@
 <!DOCTYPE html>
 <html lang="pt-BR" data-bs-theme="light">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AllaChart🐶</title>
-    
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Poppins:wght@700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    
+
+    <script src="/_vercel/speed-insights/script.js" defer></script>
+    <script>
+        window.va = window.va || function () { (window.va.q = window.va.q || []).push(arguments); };
+    </script>
+    <script src="/_vercel/insights/script.js" defer></script>
+
     <style>
         :root {
             --bs-body-font-family: 'Inter', sans-serif;
             --bs-body-bg: #f8f9fa;
         }
+
         [data-bs-theme="dark"] {
             --bs-body-bg: #1a1a1a;
         }
-        
+
         /* --- INTRO ANIMATION (GRAPH EASTER EGG) --- */
         #intro-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #1A1D2D; z-index: 10000; transition: opacity 0.8s ease-in-out; pointer-events: none; display: flex; align-items: center; justify-content: center; }
         #intro-animation-container { position: relative; width: clamp(300px, 60vw, 600px); display: flex; flex-direction: column; align-items: center; }
@@ -28,7 +36,7 @@
         @keyframes draw { to { stroke-dashoffset: 0; } }
         #intro-title { font-family: 'Poppins', sans-serif; font-size: clamp(2.5rem, 10vw, 5rem); font-weight: 700; color: #fff; margin-top: -1rem; opacity: 0; transform: translateY(10px); animation: fadeIn 1s ease-out 1.5s forwards; }
         @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
-        
+
         /* --- MAIN APP STYLES --- */
         .app-container { opacity: 0; transition: opacity 0.5s ease-in; min-width: 1400px; }
         .app-container.visible { opacity: 1; }
@@ -48,7 +56,7 @@
         #main-content { flex-grow: 1; padding: 1.5rem; }
         #chart-container { width: 100%; height: 85vh; min-height: 600px; background-color: var(--bs-body-tertiary); border-radius: 0.375rem; box-shadow: var(--bs-box-shadow-sm); padding: 1rem; transition: background-color 0.3s, border-color 0.3s; }
         #notification-container { z-index: 1100; }
-        
+
         /* --- Saved Charts List & Previews --- */
         .saved-chart-item { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 0.4rem; border-bottom: 1px solid var(--bs-border-color); }
         .saved-chart-item .thumbnail-container { width: 40px; height: 30px; margin-right: 8px; flex-shrink: 0; background-color: var(--bs-tertiary-bg); border: 1px solid var(--bs-border-color); border-radius: 3px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -57,7 +65,7 @@
         .saved-chart-preview-pane { display: none; position: absolute; top: 50%; transform: translateY(-50%); left: 100%; margin-left: 15px; z-index: 1200; border: 1px solid var(--bs-border-color); box-shadow: var(--bs-box-shadow-lg); background-color: var(--bs-body-bg); padding: 0.5rem; border-radius: 0.375rem; pointer-events: none; }
         .saved-chart-preview-pane img { max-width: 400px; max-height: 300px; display: block; }
         .saved-chart-item:hover .saved-chart-preview-pane { display: block; }
-        
+
         /* --- Custom Context Menu --- */
         #custom-context-menu { position: absolute; z-index: 10001; background-color: var(--bs-body-bg); border: 1px solid var(--bs-border-color); border-radius: 0.375rem; box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15); padding: 0.5rem 0; min-width: 150px; }
         .context-menu-item { padding: 0.5rem 1rem; cursor: pointer; font-size: 0.9rem; }
@@ -65,126 +73,64 @@
         .context-menu-item.delete { color: var(--bs-danger); }
 
         /* --- AI CHAT STYLES --- */
-        #ai-chat-fab {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: var(--bs-primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            cursor: pointer;
-            z-index: 1050;
-            transition: transform 0.2s ease-in-out;
-        }
-        #ai-chat-fab:hover {
-            transform: scale(1.1);
-        }
-        #ai-chat-modal .modal-dialog {
-            position: fixed;
-            right: 25px;
-            bottom: 100px;
-            width: 400px;
-            max-width: 90vw;
-            margin: 0;
-            z-index: 1055;
-        }
-        #ai-chat-modal .modal-content {
-            height: 50vh;
-            max-height: 500px;
-            box-shadow: var(--bs-box-shadow-lg);
-        }
-        #ai-chat-modal .modal-body {
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        #ai-chat-messages {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-        }
-        .chat-message {
-            margin-bottom: 10px;
-            padding: 8px 12px;
-            border-radius: 18px;
-            max-width: 85%;
-            word-wrap: break-word;
-            line-height: 1.4;
-        }
-        .chat-message.user {
-            background-color: var(--bs-primary-bg-subtle);
-            align-self: flex-end;
-            margin-left: auto;
-        }
-        .chat-message.ai {
-            background-color: var(--bs-secondary-bg-subtle);
-            align-self: flex-start;
-        }
-        .chat-message.tool {
-            color: var(--bs-secondary-color);
-            font-style: italic;
-            font-size: 0.8rem;
-            text-align: center;
-            width: 100%;
-            background-color: transparent;
-        }
-        .typing-indicator {
-            display: flex;
-            align-items: center;
-        }
-        .typing-indicator span {
-            height: 8px; width: 8px; margin: 0 2px;
-            background-color: var(--bs-secondary-color);
-            border-radius: 50%; display: inline-block;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
+        #ai-chat-fab { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; border-radius: 50%; background-color: var(--bs-primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); cursor: pointer; z-index: 1050; transition: transform 0.2s ease-in-out; }
+        #ai-chat-fab:hover { transform: scale(1.1); }
+        #ai-chat-modal .modal-dialog { position: fixed; right: 25px; bottom: 100px; width: 400px; max-width: 90vw; margin: 0; z-index: 1055; }
+        #ai-chat-modal .modal-content { height: 50vh; max-height: 500px; box-shadow: var(--bs-box-shadow-lg); }
+        #ai-chat-modal .modal-body { height: 100%; display: flex; flex-direction: column; }
+        #ai-chat-messages { flex-grow: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; }
+        .chat-message { margin-bottom: 10px; padding: 8px 12px; border-radius: 18px; max-width: 80%; word-wrap: break-word; line-height: 1.4; }
+        .chat-message.user { background-color: var(--bs-primary-bg-subtle); align-self: flex-end; margin-left: auto; }
+        .chat-message.ai { background-color: var(--bs-secondary-bg-subtle); align-self: flex-start; }
+        .chat-message.tool { color: var(--bs-secondary-color); font-style: italic; font-size: 0.8rem; text-align: center; width: 100%; background-color: transparent; }
+        .typing-indicator { display: flex; align-items: center; }
+        .typing-indicator span { height: 8px; width: 8px; margin: 0 2px; background-color: var(--bs-secondary-color); border-radius: 50%; display: inline-block; animation: bounce 1.4s infinite ease-in-out both; }
         .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1.0); }
-        }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
     </style>
-    
-    <script src="/_vercel/speed-insights/script.js" defer></script>
-    <script>
-      window.va = window.va || function () { (window.va.q = window.va.q || []).push(arguments); };
-    </script>
-    <script src="/_vercel/insights/script.js" defer></script>
-
 </head>
 
 <body>
     <div id="intro-overlay">
         <div id="intro-animation-container">
             <svg id="intro-graph" viewBox="0 0 400 100" preserveAspectRatio="none">
-                <path d="M 0,50 L 50,50 C 75,10, 125,90, 150,50 S 225,10, 250,50 S 325,90, 350,50 L 400,50" fill="none" stroke="#00f7ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M 0,50 L 50,50 C 75,10, 125,90, 150,50 S 225,10, 250,50 S 325,90, 350,50 L 400,50" fill="none" stroke="#00f7ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
             <h1 id="intro-title">AllaChart🐶</h1>
         </div>
     </div>
 
     <div class="app-container">
+        
         <nav class="navbar bg-body-tertiary border-bottom sticky-top">
             <div class="container-fluid">
-                <a class="navbar-brand d-flex align-items-center" href="#"><svg class="me-2" style="width: 2rem; height: 2rem; fill: currentColor;" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g><circle cx="50" cy="25" r="15"/><circle cx="38" cy="40" r="12"/><circle cx="62" cy="40" r="12"/><path d="M 35,55 A 20,20 0 0,1 65,55 L 70,80 A 10,10 0 0,1 60,90 L 40,90 A 10,10 0 0,1 30,80 Z"/><circle cx="75" cy="55" r="5"/></g></svg><h1>AllaChart🐶</h1></a>
-                <button class="btn border-0" id="theme-toggle" title="Alternar Tema"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 0 8 1v14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"/></svg></button>
+                <a class="navbar-brand d-flex align-items-center" href="#">
+                    <svg class="me-2" style="width: 2rem; height: 2rem; fill: currentColor;" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <g>
+                            <circle cx="50" cy="25" r="15" />
+                            <circle cx="38" cy="40" r="12" />
+                            <circle cx="62" cy="40" r="12" />
+                            <path d="M 35,55 A 20,20 0 0,1 65,55 L 70,80 A 10,10 0 0,1 60,90 L 40,90 A 10,10 0 0,1 30,80 Z" />
+                            <circle cx="75" cy="55" r="5" />
+                        </g>
+                    </svg>
+                    <h1>AllaChart</h1>
+                </a>
+                <button class="btn border-0" id="theme-toggle" title="Alternar Tema">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 0 8 1v14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z" />
+                    </svg>
+                </button>
             </div>
         </nav>
 
         <div class="container-fluid">
             <div class="row">
+                
                 <aside id="sidebar" class="col-lg-2 p-2">
                     <div class="accordion" id="settingsAccordion">
+                        
                         <div class="accordion-item">
                             <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSavedCharts">Seus Gráficos</button></h2>
                             <div id="collapseSavedCharts" class="accordion-collapse collapse show" data-bs-parent="#settingsAccordion">
@@ -196,6 +142,7 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="accordion-item">
                             <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseData">Editor de Dados</button></h2>
                             <div id="collapseData" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
@@ -207,6 +154,7 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="accordion-item">
                             <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseChart">Configurações do Gráfico</button></h2>
                             <div id="collapseChart" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
@@ -218,6 +166,7 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="accordion-item">
                             <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAxes">Eixos e Detalhes</button></h2>
                             <div id="collapseAxes" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
@@ -238,19 +187,21 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="accordion-item">
-                             <h2 class="accordion-header">
-                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHelp">
-                                     🐶 Assistente Alla
-                                 </button>
-                             </h2>
-                             <div id="collapseHelp" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
-                                 <div class="accordion-body text-center">
-                                     <p class="small text-muted">Precisa de ajuda ou quer criar um gráfico com comandos? Clique no botão de chat para falar com o Alla!</p>
-                                     <button class="btn btn-primary" id="open-chat-from-sidebar">Abrir Chat</button>
-                                 </div>
-                             </div>
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHelp">
+                                    🐶 Assistente Alla
+                                </button>
+                            </h2>
+                            <div id="collapseHelp" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
+                                <div class="accordion-body text-center">
+                                    <p class="small text-muted">Precisa de ajuda ou quer criar um gráfico com comandos? Clique no botão de chat para falar com o Alla!</p>
+                                    <button class="btn btn-primary" id="open-chat-from-sidebar">Abrir Chat</button>
+                                </div>
+                            </div>
                         </div>
+
                         <div class="accordion-item">
                             <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFile">Arquivo</button></h2>
                             <div id="collapseFile" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
@@ -258,7 +209,7 @@
                                     <div class="d-grid gap-2">
                                         <button id="import-btn" class="btn btn-outline-secondary">Importar Planilha</button>
                                         <button id="export-excel" class="btn btn-primary">Exportar para Excel</button>
-                                        <button id="export-pdf-btn" class="btn btn-danger">Exportar para PDF</button> 
+                                        <button id="export-pdf-btn" class="btn btn-danger">Exportar para PDF</button>
                                         <hr>
                                         <button id="copy-design-code-btn" class="btn btn-sm btn-outline-info">Copiar Código de Design</button>
                                         <button id="apply-design-code-btn" class="btn btn-sm btn-info">Aplicar Código de Design</button>
@@ -267,11 +218,15 @@
                             </div>
                         </div>
                     </div>
+                    
                     <div class="d-grid mt-3">
                         <button id="reset-to-default-btn" class="btn btn-warning">Reiniciar para o Padrão</button>
                     </div>
                 </aside>
-                <main class="col-lg-10 p-3"><div id="chart-container"></div></main>
+                
+                <main class="col-lg-10 p-3">
+                    <div id="chart-container"></div>
+                </main>
             </div>
         </div>
     </div>
@@ -313,7 +268,7 @@
                 </div>
                 <div class="modal-footer">
                     <div class="input-group">
-                        <input type="text" id="ai-chat-input" class="form-control" placeholder="Peça um comando... Ex: 'Mude o título'" aria-label="Sua mensagem">
+                        <input type="text" id="ai-chat-input" class="form-control" placeholder="Peça um comando... Ex: 'Crie um gráfico de barras azul'" aria-label="Sua mensagem">
                         <button class="btn btn-primary" type="button" id="ai-chat-send-btn">Enviar</button>
                     </div>
                 </div>
@@ -476,7 +431,7 @@
                         case 'series':
                             const isPie = c.chartType.value === 'pie';
                             if (!isPie) {
-                                this.showModal('Editar Série', `Você clicou na série "${params.seriesName}". O que deseja fazer?`, (choice) => {
+                                this.showModal(`Editar Série`, `Você clicou na série "${params.seriesName}". O que deseja fazer?`, (choice) => {
                                     if (choice === 'color') {
                                         c.lineColor.click();
                                     } else {
@@ -636,7 +591,7 @@
                 },
                 generateRandomData() {
                     const pointCount = 7,
-                          startYear = new Date().getFullYear() - pointCount;
+                        startYear = new Date().getFullYear() - pointCount;
                     const labels = Array.from({
                         length: pointCount
                     }, (_, i) => (startYear + i + 1).toString());
@@ -666,7 +621,7 @@
                 },
                 getChartOptions() {
                     const c = APP.dom.controls,
-                          isDark = APP.state.theme === 'dark';
+                        isDark = APP.state.theme === 'dark';
                     const gridColor = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
                     const textColor = isDark ? '#ccc' : '#666';
                     const titleColor = c.titleColor.value;
@@ -908,7 +863,7 @@
                             });
                             if (json.length < 2) return this.showNotification('Planilha vazia ou inválida.', 'danger');
                             const h = json[0],
-                                  body = json.slice(1);
+                                body = json.slice(1);
                             APP.state.data = {
                                 name: h[1] || 'Série Importada',
                                 labels: body.map(row => String(row[0])),
@@ -924,7 +879,7 @@
                 },
                 async exportToExcel() {
                     const wb = new ExcelJS.Workbook(),
-                          ws = wb.addWorksheet('Relatório');
+                        ws = wb.addWorksheet('Relatório');
                     const img = APP.state.chart.getDataURL({
                         type: 'png',
                         pixelRatio: 3,
@@ -936,7 +891,7 @@
                     });
                     ws.addImage(imgId, 'A1:J20');
                     const startRow = 22,
-                          data = APP.state.data;
+                        data = APP.state.data;
                     ws.getCell(startRow, 1).value = "Ano";
                     ws.getCell(startRow, 2).value = data.name;
                     [1, 2].forEach(i => ws.getCell(startRow, i).font = {
@@ -1169,16 +1124,8 @@
                     history: [],
                     init() {
                         const controls = APP.dom.controls;
-                        const openChatAndGreet = () => {
-                            APP.state.aiChatModal.show();
-                            if (this.history.length === 0) {
-                                const welcomeMessage = "Olá! Sou seu assistente de gráficos. Posso **analisar seu gráfico atual** e **fazer alterações** para você. Diga-me o que você precisa! Por exemplo:\n\n* _'Mude o título para Vendas Trimestrais'_\n* _'Qual o valor para o ano de 2024?'_\n* _'Adicione o ano de 2026 com o valor 500'_";
-                                this.addMessage(welcomeMessage, 'ai');
-                                this.history.push({ role: 'model', parts: [{ text: 'Initial greeting sent.' }]});
-                            }
-                        };
-                        controls.aiChatFab.addEventListener('click', openChatAndGreet);
-                        controls.openChatFromSidebar.addEventListener('click', openChatAndGreet);
+                        controls.aiChatFab.addEventListener('click', () => APP.state.aiChatModal.show());
+                        controls.openChatFromSidebar.addEventListener('click', () => APP.state.aiChatModal.show());
                         controls.aiChatSendBtn.addEventListener('click', () => this.handleUserInput());
                         controls.aiChatInput.addEventListener('keypress', (e) => {
                             if (e.key === 'Enter') {
@@ -1187,30 +1134,12 @@
                             }
                         });
                     },
-                    getCurrentChartState() {
-                        const c = APP.dom.controls;
-                        const data = APP.state.data;
-                        return {
-                            title: c.chartTitle.value,
-                            type: c.chartType.value,
-                            seriesName: data.name,
-                            xAxisTitle: c.xAxisTitle.value,
-                            yAxisTitle: c.yAxisTitle.value,
-                            color: c.lineColor.value,
-                            backgroundColor: c.chartBgColor.value,
-                            gridStyle: c.gridStyle.value,
-                            data: {
-                                labels: data.labels,
-                                values: data.values
-                            }
-                        };
-                    },
                     addMessage(text, sender, isToolMessage = false) {
                         const messageContainer = APP.dom.controls.aiChatMessages;
                         const messageDiv = document.createElement('div');
                         const messageClass = isToolMessage ? 'tool' : sender;
                         messageDiv.className = `chat-message ${messageClass}`;
-                        
+
                         if (isToolMessage) {
                             messageDiv.innerHTML = `🐶 Executando ação: <strong>${text}</strong>...`;
                         } else {
@@ -1246,11 +1175,10 @@
                         }
                     },
                     async callBackend(prompt) {
-                        const currentChartState = this.getCurrentChartState();
                         this.history.push({
                             role: 'user',
                             parts: [{
-                                text: `User prompt: "${prompt}"\n\nCurrent chart context: ${JSON.stringify(currentChartState)}`
+                                text: prompt
                             }]
                         });
                         const response = await fetch('/api/chat', {
@@ -1277,71 +1205,28 @@
                         const { name, args } = toolCall;
                         this.addMessage(name, 'ai', true);
                         let success = false;
-                        
                         switch (name) {
-                            case 'changeChartProperty':
-                                if (args.property && args.value !== undefined) {
-                                    const c = APP.dom.controls;
-                                    let controlToUpdate;
-                                    switch(args.property.toLowerCase()) {
-                                        case 'title': controlToUpdate = c.chartTitle; break;
-                                        case 'xaxistitle': controlToUpdate = c.xAxisTitle; break;
-                                        case 'yaxistitle': controlToUpdate = c.yAxisTitle; break;
-                                        case 'type': controlToUpdate = c.chartType; break;
-                                        case 'backgroundcolor': controlToUpdate = c.chartBgColor; break;
-                                        case 'gridstyle': controlToUpdate = c.gridStyle; break;
-                                        case 'color': controlToUpdate = c.lineColor; break;
-                                        case 'seriesname': APP.state.data.name = args.value; success = true; break;
-                                    }
-                                    if(controlToUpdate) {
-                                        controlToUpdate.value = args.value;
-                                        success = true;
-                                    }
-                                    if (success) {
-                                        APP.methods.updateSettings();
-                                        if(args.property === 'type') APP.methods.toggleLineStyleControl();
-                                    }
+                            case 'generateRandomChart':
+                                APP.methods.generateRandomData();
+                                APP.methods.rebuildUI();
+                                success = true;
+                                break;
+                            case 'changeChartColor':
+                                if (args.color) {
+                                    APP.dom.controls.lineColor.value = args.color;
+                                    APP.methods.updateSettings();
+                                    success = true;
                                 }
                                 break;
-                            case 'updateDataPoint':
-                                if (args.label && args.newValue !== undefined) {
-                                    const dataIndex = APP.state.data.labels.findIndex(l => l === String(args.label));
-                                    if (dataIndex !== -1) {
-                                        APP.state.data.values[dataIndex] = Number(args.newValue);
-                                        APP.methods.rebuildUI();
-                                        success = true;
-                                    }
-                                }
-                                break;
-                            case 'addDataPoint':
-                                if (args.label && args.value !== undefined) {
-                                    APP.state.data.labels.push(String(args.label));
-                                    APP.state.data.values.push(Number(args.value));
+                            case 'setChartData':
+                                if (args.labels && args.values && args.labels.length === args.values.length) {
+                                    APP.state.data.labels = args.labels.map(String);
+                                    APP.state.data.values = args.values.map(Number);
                                     APP.methods.rebuildUI();
                                     success = true;
                                 }
                                 break;
-                            case 'removeDataPoint':
-                                if (args.label) {
-                                    const dataIndex = APP.state.data.labels.findIndex(l => l === String(args.label));
-                                    if (dataIndex !== -1) {
-                                        APP.state.data.labels.splice(dataIndex, 1);
-                                        APP.state.data.values.splice(dataIndex, 1);
-                                        APP.methods.rebuildUI();
-                                        success = true;
-                                    }
-                                }
-                                break;
-                             case 'setChartData':
-                                 if (args.labels && args.values && args.labels.length === args.values.length) {
-                                     APP.state.data.labels = args.labels.map(String);
-                                     APP.state.data.values = args.values.map(Number);
-                                     APP.methods.rebuildUI();
-                                     success = true;
-                                 }
-                                 break;
                         }
-
                         this.history.push({
                             role: 'function',
                             parts: [{
