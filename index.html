@@ -238,7 +238,8 @@
                                 <div class="accordion-body">
                                     <div class="d-grid gap-2">
                                         <button id="import-btn" class="btn btn-outline-secondary">Importar Planilha</button>
-                                        <button id="export-excel" class="btn btn-primary mb-2">Exportar para Excel</button>
+                                        <button id="export-excel" class="btn btn-primary">Exportar para Excel</button>
+                                        <button id="export-pdf-btn" class="btn btn-danger">Exportar para PDF</button> 
                                         <hr>
                                         <button id="copy-design-code-btn" class="btn btn-sm btn-outline-info">Copiar Código de Design</button>
                                         <button id="apply-design-code-btn" class="btn btn-sm btn-info">Aplicar Código de Design</button>
@@ -266,7 +267,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body" id="genericModalBody">
-            </div>
+          </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
             <button type="button" class="btn btn-primary" id="genericModalConfirmBtn">Confirmar</button>
@@ -280,6 +281,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -327,6 +329,8 @@
                     contactSubject: document.getElementById('contact-subject'),
                     contactMessage: document.getElementById('contact-message'),
                     sendEmailBtn: document.getElementById('send-email-btn'),
+                    // MODIFICAÇÃO: Referência ao novo botão PDF
+                    exportPdfBtn: document.getElementById('export-pdf-btn'),
                 }
             },
             methods: {
@@ -360,6 +364,8 @@
                     APP.dom.controls.themeToggle.addEventListener('click', () => this.toggleTheme());
                     APP.dom.controls.importBtn.addEventListener('click', () => { const u = document.createElement('input'); u.type = 'file'; u.accept = '.xlsx,.csv'; u.onchange = (e) => this.handleFileUpload(e); u.click(); });
                     APP.dom.controls.exportExcelBtn.addEventListener('click', () => this.exportToExcel());
+                    // MODIFICAÇÃO: Event listener para o botão de PDF
+                    APP.dom.controls.exportPdfBtn.addEventListener('click', () => this.exportToPdf());
                     APP.dom.controls.renameSeriesBtn.addEventListener('click', () => this.renameSeries());
                     APP.dom.controls.copyDesignCodeBtn.addEventListener('click', () => this.copyDesignCode());
                     APP.dom.controls.applyDesignCodeBtn.addEventListener('click', () => this.applyDesignCode());
@@ -602,6 +608,37 @@
                 loadState() { try { const s = JSON.parse(localStorage.getItem('alladinAppState')); if (s && s.data && s.data.values) { APP.state.data = s.data; APP.state.theme = s.theme || 'light'; APP.dom.html.setAttribute('data-bs-theme', APP.state.theme); if (s.controls) { for (const k in s.controls) { if (APP.dom.controls[k] && s.controls[k] !== undefined) APP.dom.controls[k].value = s.controls[k]; } } this.showNotification("Sessão anterior restaurada!"); } else { this.generateRandomData(); } } catch (e) { this.generateRandomData(); } },
                 handleFileUpload(e) { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = (event) => { try { const wb = XLSX.read(new Uint8Array(event.target.result), { type: 'array' }); const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 }); if (json.length < 2) return this.showNotification('Planilha vazia ou inválida.', 'danger'); const h = json[0], body = json.slice(1); APP.state.data = { name: h[1] || 'Série Importada', labels: body.map(row => String(row[0])), values: body.map(row => parseFloat(row[1]) || 0) }; this.rebuildUI(); this.showNotification('Dados importados com sucesso!', 'success');} catch(err){this.showNotification('Erro ao ler a planilha.', 'danger');}}; r.readAsArrayBuffer(f);},
                 async exportToExcel() { const wb = new ExcelJS.Workbook(), ws = wb.addWorksheet('Relatório'); const img = APP.state.chart.getDataURL({ type: 'png', pixelRatio: 3, backgroundColor: APP.dom.controls.chartBgColor.value }); const imgId = wb.addImage({ base64: img, extension: 'png' }); ws.addImage(imgId, 'A1:J20'); const startRow = 22, data = APP.state.data; ws.getCell(startRow, 1).value = "Ano"; ws.getCell(startRow, 2).value = data.name; [1, 2].forEach(i => ws.getCell(startRow, i).font = { bold: true, size: 12 }); data.labels.forEach((l, i) => { ws.getCell(startRow + 1 + i, 1).value = isNaN(l) ? l : Number(l); ws.getCell(startRow + 1 + i, 2).value = data.values[i]; }); ws.getColumn(1).width = 20; ws.getColumn(2).width = 20; const buffer = await wb.xlsx.writeBuffer(); const title = APP.dom.controls.chartTitle.value.replace(/[^a-z0-9]/gi, '_').toLowerCase(); saveAs(new Blob([buffer]), `Relatorio_AllaChart_${title}.xlsx`); },
+                // MODIFICAÇÃO: Nova função para exportar para PDF
+                exportToPdf() {
+                    this.showNotification('Gerando PDF de alta qualidade...', 'info');
+                    try {
+                        const chartImg = APP.state.chart.getDataURL({
+                            type: 'png',
+                            pixelRatio: 3, // Gera uma imagem com 3x a resolução para alta qualidade
+                            backgroundColor: APP.dom.controls.chartBgColor.value
+                        });
+
+                        const chartWidth = APP.state.chart.getWidth();
+                        const chartHeight = APP.state.chart.getHeight();
+                        const orientation = chartWidth > chartHeight ? 'l' : 'p'; // 'l' para landscape, 'p' para portrait
+
+                        // Usa o construtor window.jspdf.jsPDF para acessar a biblioteca
+                        const pdf = new window.jspdf.jsPDF({
+                            orientation: orientation,
+                            unit: 'px',
+                            format: [chartWidth, chartHeight] // Cria um PDF com o tamanho exato do gráfico
+                        });
+
+                        pdf.addImage(chartImg, 'PNG', 0, 0, chartWidth, chartHeight);
+                        
+                        const title = APP.dom.controls.chartTitle.value.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'grafico';
+                        pdf.save(`Relatorio_AllaChart_${title}.pdf`);
+
+                    } catch (error) {
+                        console.error("Erro ao gerar PDF:", error);
+                        this.showNotification('Ocorreu um erro ao gerar o PDF.', 'danger');
+                    }
+                },
                 copyDesignCode() {
                     const c = APP.dom.controls;
                     const design = [c.chartType.value, c.chartTitle.value, c.titleFontSize.value, c.titleColor.value.substring(1), c.lineColor.value.substring(1), c.gridStyle.value, c.chartBgColor.value.substring(1), c.yGridLines.value, c.lineStyleSelect.value];
@@ -678,11 +715,11 @@
                 resetToDefault() {
                     this.showModal('Reiniciar para o Padrão', "Tem certeza? O gráfico atual será perdido e a interface reiniciada. Seus gráficos salvos não serão afetados.", (confirmed) => {
                         if (confirmed) {
-                           localStorage.removeItem('alladinAppState');
-                           this.generateRandomData();
-                           this.rebuildUI(false); 
-                           this.toggleLineStyleControl();
-                           this.showNotification("Aplicação reiniciada para o padrão.", "info");
+                            localStorage.removeItem('alladinAppState');
+                            this.generateRandomData();
+                            this.rebuildUI(false); 
+                            this.toggleLineStyleControl();
+                            this.showNotification("Aplicação reiniciada para o padrão.", "info");
                         }
                     }, { confirmClass: 'btn-warning', confirmText: 'Reiniciar' });
                 },
@@ -697,10 +734,10 @@
                         M.body.textContent = bodyContent;
                     } else if (typeof bodyContent === 'object' && bodyContent.type === 'input') {
                         if(bodyContent.label) {
-                             const label = document.createElement('label');
-                             label.className = 'form-label';
-                             label.textContent = bodyContent.label;
-                             M.body.appendChild(label);
+                            const label = document.createElement('label');
+                            label.className = 'form-label';
+                            label.textContent = bodyContent.label;
+                            M.body.appendChild(label);
                         }
                         inputElement = document.createElement('input');
                         inputElement.className = 'form-control';
@@ -722,13 +759,13 @@
                     };
                     
                     const handleCancel = () => {
-                         callback(cancelAction);
-                         cleanup();
+                          callback(cancelAction);
+                          cleanup();
                     }
 
                     const cleanup = () => {
-                         M.confirmBtn.removeEventListener('click', handleConfirm);
-                         M.el.removeEventListener('hidden.bs.modal', handleCancel);
+                          M.confirmBtn.removeEventListener('click', handleConfirm);
+                          M.el.removeEventListener('hidden.bs.modal', handleCancel);
                     }
 
                     M.confirmBtn.addEventListener('click', handleConfirm);
