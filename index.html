@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A.L.L.A.D.I.N. 7.4 - Versão Final</title>
+    <title>AllaChart🐶</title>
     
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Poppins:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Poppins:wght@700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -20,16 +20,50 @@
             --bs-body-bg: #1a1a1a;
         }
         
-        /* --- INTRO ANIMATION --- */
+        /* --- INTRO ANIMATION (GRAPH EASTER EGG) --- */
         #intro-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: #121212; z-index: 10000; display: flex;
-            align-items: center; justify-content: center; transition: opacity 0.8s ease-in-out;
+            background-color: #1A1D2D;
+            z-index: 10000;
+            transition: opacity 0.8s ease-in-out;
             pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        #intro-title { font-family: 'Poppins', sans-serif; font-size: clamp(2rem, 10vw, 5rem); font-weight: 700; color: #fff; }
-        #intro-title .letter { display: inline-block; opacity: 0; transform: translateY(20px); animation: letterFadeIn 0.6s forwards cubic-bezier(0.25, 0.46, 0.45, 0.94); }
-        @keyframes letterFadeIn { to { opacity: 1; transform: translateY(0); } }
+        #intro-animation-container {
+            position: relative;
+            width: clamp(300px, 60vw, 600px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #intro-graph {
+            width: 100%;
+            filter: drop-shadow(0 0 10px rgba(0, 247, 255, 0.7));
+        }
+        #intro-graph path {
+            stroke-dasharray: 1000; /* Patched by JS */
+            stroke-dashoffset: 1000; /* Patched by JS */
+            animation: draw 1.8s ease-in-out forwards;
+        }
+        @keyframes draw {
+            to { stroke-dashoffset: 0; }
+        }
+        #intro-title {
+            font-family: 'Poppins', sans-serif;
+            font-size: clamp(2.5rem, 10vw, 5rem);
+            font-weight: 700;
+            color: #fff;
+            margin-top: -1rem;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeIn 1s ease-out 1.5s forwards;
+        }
+        @keyframes fadeIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
 
         /* --- MAIN APP STYLES --- */
         .app-container { 
@@ -56,57 +90,77 @@
         .data-input-row label { flex-grow: 1; text-align: right; }
         
         #main-content { flex-grow: 1; padding: 1.5rem; }
-        #chart-container { width: 100%; height: 75vh; min-height: 550px; background-color: var(--bs-body-tertiary); border-radius: 0.375rem; box-shadow: var(--bs-box-shadow-sm); padding: 1rem; transition: background-color 0.3s, border-color 0.3s;}
+        #chart-container { 
+            width: 100%; 
+            height: 80vh; /* Altura do gráfico aumentada */
+            min-height: 600px; /* Altura mínima aumentada */
+            background-color: var(--bs-body-tertiary); 
+            border-radius: 0.375rem; 
+            box-shadow: var(--bs-box-shadow-sm); 
+            padding: 1rem; 
+            transition: background-color 0.3s, border-color 0.3s;
+        }
         #notification-container { z-index: 1100; }
+        
+        /* --- Saved Charts List & Previews --- */
         .saved-chart-item {
+            position: relative;
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 0.5rem;
             border-bottom: 1px solid var(--bs-border-color);
         }
+        .saved-chart-item .thumbnail-container {
+            width: 40px; height: 30px; margin-right: 8px; flex-shrink: 0;
+            background-color: var(--bs-tertiary-bg); border: 1px solid var(--bs-border-color);
+            border-radius: 3px; display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .saved-chart-item .saved-chart-thumbnail { width: 100%; height: 100%; object-fit: cover; }
+        .saved-chart-item .saved-chart-name { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px; }
+        .saved-chart-preview-pane {
+            display: none; position: absolute; top: 50%; transform: translateY(-50%);
+            left: 100%; margin-left: 15px; z-index: 1200;
+            border: 1px solid var(--bs-border-color); box-shadow: var(--bs-box-shadow-lg);
+            background-color: var(--bs-body-bg); padding: 0.5rem; border-radius: 0.375rem;
+            pointer-events: none;
+        }
+        .saved-chart-preview-pane img { max-width: 400px; max-height: 300px; display: block; }
+        .saved-chart-item:hover .saved-chart-preview-pane { display: block; }
+
         /* Custom Context Menu */
         #custom-context-menu {
-            position: absolute;
-            z-index: 10001;
-            background-color: var(--bs-body-bg);
-            border: 1px solid var(--bs-border-color);
-            border-radius: 0.375rem;
-            box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
-            padding: 0.5rem 0;
-            min-width: 150px;
+            position: absolute; z-index: 10001; background-color: var(--bs-body-bg);
+            border: 1px solid var(--bs-border-color); border-radius: 0.375rem;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15); padding: 0.5rem 0; min-width: 150px;
         }
-        .context-menu-item {
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-        .context-menu-item:hover {
-            background-color: var(--bs-primary-bg-subtle);
-        }
-        .context-menu-item.delete {
-            color: var(--bs-danger);
-        }
+        .context-menu-item { padding: 0.5rem 1rem; cursor: pointer; font-size: 0.9rem; }
+        .context-menu-item:hover { background-color: var(--bs-primary-bg-subtle); }
+        .context-menu-item.delete { color: var(--bs-danger); }
     </style>
 </head>
 <body>
-    <div id="intro-overlay"><h1 id="intro-title"></h1></div>
+    <div id="intro-overlay">
+        <div id="intro-animation-container">
+            <svg id="intro-graph" viewBox="0 0 400 100" preserveAspectRatio="none">
+                <path d="M 0,50 L 50,50 C 75,10, 125,90, 150,50 S 225,10, 250,50 S 325,90, 350,50 L 400,50" fill="none" stroke="#00f7ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h1 id="intro-title">AllaChart🐶</h1>
+        </div>
+    </div>
 
     <div class="app-container">
-        <!-- Navbar -->
         <nav class="navbar bg-body-tertiary border-bottom sticky-top">
             <div class="container-fluid">
-                <a class="navbar-brand d-flex align-items-center" href="#"><svg class="me-2" style="width: 2rem; height: 2rem; fill: currentColor;" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g><circle cx="50" cy="25" r="15"/><circle cx="38" cy="40" r="12"/><circle cx="62" cy="40" r="12"/><path d="M 35,55 A 20,20 0 0,1 65,55 L 70,80 A 10,10 0 0,1 60,90 L 40,90 A 10,10 0 0,1 30,80 Z"/><circle cx="75" cy="55" r="5"/></g></svg><h1>A.L.L.A.D.I.N.</h1></a>
+                <a class="navbar-brand d-flex align-items-center" href="#"><svg class="me-2" style="width: 2rem; height: 2rem; fill: currentColor;" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><g><circle cx="50" cy="25" r="15"/><circle cx="38" cy="40" r="12"/><circle cx="62" cy="40" r="12"/><path d="M 35,55 A 20,20 0 0,1 65,55 L 70,80 A 10,10 0 0,1 60,90 L 40,90 A 10,10 0 0,1 30,80 Z"/><circle cx="75" cy="55" r="5"/></g></svg><h1>AllaChart🐶</h1></a>
                 <button class="btn border-0" id="theme-toggle" title="Alternar Tema"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 0 8 1v14zm0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"/></svg></button>
             </div>
         </nav>
 
         <div class="container-fluid">
             <div class="row">
-                <!-- Sidebar -->
                 <aside id="sidebar" class="col-lg-3 p-3">
                     <div class="accordion" id="settingsAccordion">
-                        <!-- Seção Seus Gráficos -->
                         <div class="accordion-item">
                             <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSavedCharts">Seus Gráficos</button></h2>
                             <div id="collapseSavedCharts" class="accordion-collapse collapse show" data-bs-parent="#settingsAccordion">
@@ -133,10 +187,10 @@
                             <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseChart">Configurações do Gráfico</button></h2>
                             <div id="collapseChart" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
                                 <div class="accordion-body">
-                                    <label for="chart-title" class="form-label">Título</label><input type="text" id="chart-title" class="form-control form-control-sm mb-2">
+                                    <label for="chart-title" class="form-label">Título Principal</label><input type="text" id="chart-title" class="form-control form-control-sm mb-2">
                                     <label for="chart-type" class="form-label">Tipo de Gráfico</label><select id="chart-type" class="form-select form-select-sm mb-2"><option value="line">Linha</option><option value="bar">Barras</option><option value="pie">Pizza</option><option value="scatter">Dispersão</option></select>
                                     <div id="line-style-control-wrapper" class="mb-2"><label for="line-style-select" class="form-label">Estilo da Linha</label><select id="line-style-select" class="form-select form-select-sm"><option value="true">Arredondadas</option><option value="false">Retas</option></select></div>
-                                    <div class="row"><div class="col"><label class="form-label">Cor da Série</label><input type="color" id="line-color" class="form-control form-control-color w-100"></div><div class="col"><label class="form-label">Fundo</label><input type="color" id="chart-bg-color" class="form-control form-control-color w-100"></div></div>
+                                    <div class="row"><div class="col"><label class="form-label">Cor da Série</label><input type="color" id="line-color" class="form-control form-control-color w-100" value="#6c757d"></div><div class="col"><label class="form-label">Fundo</label><input type="color" id="chart-bg-color" class="form-control form-control-color w-100"></div></div>
                                 </div>
                             </div>
                         </div>
@@ -144,11 +198,37 @@
                             <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAxes">Eixos e Detalhes</button></h2>
                             <div id="collapseAxes" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
                                 <div class="accordion-body">
-                                    <div class="row mb-2">
-                                        <div class="col"><label class="form-label">Nº de Linhas Horizontais (Y)</label><select id="y-grid-lines" class="form-select form-select-sm"><option>Auto</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+                                    <div class="row mb-2"><div class="col"><label for="x-axis-title" class="form-label">Título Eixo X</label><input type="text" id="x-axis-title" class="form-control form-control-sm"></div><div class="col"><label for="y-axis-title" class="form-label">Título Eixo Y</label><input type="text" id="y-axis-title" class="form-control form-control-sm"></div></div>
+                                    <label class="form-label">Faixa de Valores do Eixo Y</label>
+                                    <div class="input-group input-group-sm mb-2">
+                                        <input type="number" id="y-axis-min" class="form-control" placeholder="Mínimo">
+                                        <input type="number" id="y-axis-max" class="form-control" placeholder="Máximo">
+                                        <button class="btn btn-outline-secondary" type="button" id="y-axis-range-reset-btn">Reset</button>
                                     </div>
-                                    <label for="grid-style" class="form-label">Estilo da Grade</label><select id="grid-style" class="form-select form-select-sm mb-2"><option value="dotted">Pontilhada</option><option value="solid">Sólida</option><option value="dashed">Tracejada</option><option value="none">Nenhuma</option></select>
-                                    <div class="row"><div class="col"><label class="form-label">Tam. Fonte</label><input type="number" id="title-font-size" class="form-control form-control-sm" min="10"></div><div class="col"><label class="form-label">Cor Fonte</label><input type="color" id="title-color" class="form-control form-control-color w-100"></div></div>
+                                    <div class="row mb-2">
+                                        <div class="col"><label class="form-label">Linhas Verticais (X)</label><select id="x-grid-lines" class="form-select form-select-sm"><option>Auto</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>10</option></select></div>
+                                        <div class="col"><label class="form-label">Linhas Horizontais (Y)</label><select id="y-grid-lines" class="form-select form-select-sm"><option>Auto</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>10</option></select></div>
+                                    </div>
+                                    <label for="grid-style" class="form-label">Estilo da Grade</label><select id="grid-style" class="form-select form-select-sm mb-2"><option value="dotted">Pontilhada</option><option value="dashed">Tracejada</option><option value="solid">Sólida</option><option value="none">Nenhuma</option></select>
+                                    <div class="row"><div class="col"><label class="form-label">Tam. Fonte Títulos</label><input type="number" id="title-font-size" class="form-control form-control-sm" min="10" value="14"></div><div class="col"><label class="form-label">Cor Fonte Títulos</label><input type="color" id="title-color" class="form-control form-control-color w-100"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHelp">Ajuda & Contato</button></h2>
+                            <div id="collapseHelp" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
+                                <div class="accordion-body">
+                                    <label for="contact-subject" class="form-label">Assunto</label>
+                                    <select id="contact-subject" class="form-select form-select-sm mb-2">
+                                        <option>Dúvida Geral</option>
+                                        <option>Sugestão de Recurso</option>
+                                        <option>Relatar Erro ou Travamento</option>
+                                    </select>
+                                    <label for="contact-message" class="form-label">Sua Mensagem</label>
+                                    <textarea id="contact-message" class="form-control form-control-sm mb-2" rows="4"></textarea>
+                                    <div class="d-grid">
+                                        <button id="send-email-btn" class="btn btn-info">Enviar Email</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -171,17 +251,31 @@
                         <button id="reset-to-default-btn" class="btn btn-warning">Reiniciar para o Padrão</button>
                     </div>
                 </aside>
-                <!-- Main Content -->
-                <main class="col-lg-9 p-4"><div id="chart-container" class="w-100 h-100"></div></main>
+                <main class="col-lg-9 p-4"><div id="chart-container"></div></main>
             </div>
         </div>
     </div>
     
-    <!-- Notifications -->
     <div id="notification-container" class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
+    <div class="modal fade" id="genericModal" tabindex="-1" aria-labelledby="genericModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="genericModalLabel">Título do Modal</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body" id="genericModalBody">
+            </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" id="genericModalConfirmBtn">Confirmar</button>
+          </div>
+        </div>
+      </div>
+    </div>
     
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -189,20 +283,39 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const introOverlay = document.getElementById('intro-overlay'), introTitle = document.getElementById('intro-title'), appContainer = document.querySelector('.app-container'), titleText = "A.L.L.A.D.I.N.";
-        titleText.split('').forEach((char, i) => { const s = document.createElement('span'); s.className = 'letter'; s.textContent = char; s.style.animationDelay = `${i * 0.1}s`; introTitle.appendChild(s); });
-        setTimeout(() => { introOverlay.style.opacity = '0'; appContainer.classList.add('visible'); introOverlay.addEventListener('transitionend', () => introOverlay.style.display = 'none'); }, 2500);
+        const introOverlay = document.getElementById('intro-overlay');
+        const appContainer = document.querySelector('.app-container');
+
+        const path = document.querySelector('#intro-graph path');
+        const pathLength = path.getTotalLength();
+        path.style.strokeDasharray = pathLength;
+        path.style.strokeDashoffset = pathLength;
+
+        setTimeout(() => {
+            introOverlay.style.opacity = '0';
+            appContainer.classList.add('visible');
+            introOverlay.addEventListener('transitionend', () => introOverlay.style.display = 'none');
+        }, 2800);
 
         const APP = {
-            state: { chart: null, data: {}, theme: 'light' },
+            state: { chart: null, data: {}, theme: 'light', modal: null },
             dom: {
                 html: document.documentElement, chartContainer: document.getElementById('chart-container'), notificationContainer: document.getElementById('notification-container'),
+                modal: {
+                    el: document.getElementById('genericModal'),
+                    title: document.getElementById('genericModalLabel'),
+                    body: document.getElementById('genericModalBody'),
+                    confirmBtn: document.getElementById('genericModalConfirmBtn')
+                },
                 controls: {
                     importBtn: document.getElementById('import-btn'), 
                     chartType: document.getElementById('chart-type'), chartTitle: document.getElementById('chart-title'), 
                     titleFontSize: document.getElementById('title-font-size'), titleColor: document.getElementById('title-color'),
+                    xAxisTitle: document.getElementById('x-axis-title'), yAxisTitle: document.getElementById('y-axis-title'),
                     lineColor: document.getElementById('line-color'), gridStyle: document.getElementById('grid-style'), 
-                    chartBgColor: document.getElementById('chart-bg-color'), yGridLines: document.getElementById('y-grid-lines'),
+                    chartBgColor: document.getElementById('chart-bg-color'), 
+                    xGridLines: document.getElementById('x-grid-lines'), yGridLines: document.getElementById('y-grid-lines'),
+                    yAxisMin: document.getElementById('y-axis-min'), yAxisMax: document.getElementById('y-axis-max'), yAxisRangeResetBtn: document.getElementById('y-axis-range-reset-btn'),
                     lineStyleSelect: document.getElementById('line-style-select'),
                     exportExcelBtn: document.getElementById('export-excel'), themeToggle: document.getElementById('theme-toggle'), 
                     dataInputContainer: document.getElementById('data-input-container'), renameSeriesBtn: document.getElementById('rename-series-btn'), 
@@ -211,12 +324,16 @@
                     saveChartBtn: document.getElementById('save-chart-btn'),
                     savedChartsList: document.getElementById('saved-charts-list'),
                     resetToDefaultBtn: document.getElementById('reset-to-default-btn'),
+                    contactSubject: document.getElementById('contact-subject'),
+                    contactMessage: document.getElementById('contact-message'),
+                    sendEmailBtn: document.getElementById('send-email-btn'),
                 }
             },
             methods: {
                 init() {
                     this.loadState();
-                    APP.state.chart = echarts.init(APP.dom.chartContainer, APP.state.theme === 'dark' ? 'dark' : null);
+                    APP.state.chart = echarts.init(APP.dom.chartContainer);
+                    APP.state.modal = new bootstrap.Modal(APP.dom.modal.el);
                     this.bindEventListeners();
                     this.rebuildUI(false);
                     this.renderSavedChartsList();
@@ -228,10 +345,17 @@
                     for (const key in APP.dom.controls) {
                         const control = APP.dom.controls[key];
                         if (control && !control.id.includes('Btn') && control.id !== 'data-input-container' && control.id !== 'saved-charts-list') {
-                            const eventType = (control.type === 'color' || control.type === 'number' || control.id === 'lineStyleSelect') ? 'change' : 'input';
+                            const eventType = (control.type === 'color' || control.type === 'number' || control.tagName === 'SELECT') ? 'change' : 'input';
                             control.addEventListener(eventType, () => this.updateSettings());
                         }
                     }
+                    APP.state.chart.on('click', this.handleChartClick.bind(this));
+                    APP.dom.controls.yAxisRangeResetBtn.addEventListener('click', () => {
+                        APP.dom.controls.yAxisMin.value = '';
+                        APP.dom.controls.yAxisMax.value = '';
+                        this.updateSettings();
+                    });
+                    APP.dom.controls.sendEmailBtn.addEventListener('click', () => this.sendEmail());
                     APP.dom.controls.chartType.addEventListener('change', () => this.toggleLineStyleControl());
                     APP.dom.controls.themeToggle.addEventListener('click', () => this.toggleTheme());
                     APP.dom.controls.importBtn.addEventListener('click', () => { const u = document.createElement('input'); u.type = 'file'; u.accept = '.xlsx,.csv'; u.onchange = (e) => this.handleFileUpload(e); u.click(); });
@@ -243,43 +367,90 @@
                     APP.dom.controls.resetToDefaultBtn.addEventListener('click', () => this.resetToDefault());
                     window.addEventListener('click', () => this.hideContextMenu());
                 },
+                handleChartClick(params) {
+                    const c = APP.dom.controls;
+                    switch(params.componentType) {
+                        case 'title':
+                            this.showModal('Editar Título Principal', {type: 'input', value: c.chartTitle.value}, (newTitle) => {
+                                if (newTitle !== null) { c.chartTitle.value = newTitle; this.updateSettings(); }
+                            });
+                            break;
+                        case 'xAxis':
+                             this.showModal('Editar Título do Eixo X', {type: 'input', value: c.xAxisTitle.value}, (newTitle) => {
+                                if (newTitle !== null) { c.xAxisTitle.value = newTitle; this.updateSettings(); }
+                            });
+                            break;
+                        case 'yAxis':
+                            this.showModal('Editar Título do Eixo Y', {type: 'input', value: c.yAxisTitle.value}, (newTitle) => {
+                                if (newTitle !== null) { c.yAxisTitle.value = newTitle; this.updateSettings(); }
+                            });
+                            break;
+                        case 'series':
+                            const isPie = c.chartType.value === 'pie';
+                            if (!isPie) {
+                                this.showModal('Editar Série', `Você clicou na série "${params.seriesName}". O que deseja fazer?`, (choice) => {
+                                    if(choice === 'color') {
+                                        c.lineColor.click();
+                                    } else {
+                                        this.editDataPoint(params);
+                                    }
+                                }, {
+                                    cancelText: 'Editar Ponto',
+                                    confirmText: 'Mudar Cor',
+                                    confirmAction: 'color',
+                                    cancelAction: 'value'
+                                });
+                            } else {
+                                this.editDataPoint(params);
+                            }
+                            break;
+                    }
+                },
+                editDataPoint(params) {
+                    const currentLabel = APP.state.data.labels[params.dataIndex];
+                    const currentValue = APP.state.data.values[params.dataIndex];
+                    this.showModal(`Editar valor para "${currentLabel}"`, {type: 'input', inputType: 'number', value: currentValue}, (newValueStr) => {
+                        if (newValueStr !== null) {
+                            const newValue = parseFloat(newValueStr);
+                            if (!isNaN(newValue)) {
+                                APP.state.data.values[params.dataIndex] = newValue;
+                                this.rebuildUI();
+                                this.showNotification(`Valor para "${currentLabel}" atualizado para ${newValue}.`, 'success');
+                            } else {
+                                this.showNotification('Valor inválido. Por favor, insira um número.', 'danger');
+                            }
+                        }
+                    });
+                },
                 renderDataEditorForm() {
                     const container = APP.dom.controls.dataInputContainer;
                     container.innerHTML = '';
                     if (!APP.state.data || !APP.state.data.values) return;
-
                     APP.state.data.values.forEach((value, index) => {
                         const row = document.createElement('div');
                         row.className = 'data-input-row';
                         row.addEventListener('contextmenu', (e) => { e.preventDefault(); this.showContextMenu(e.clientX, e.clientY, index); });
-
                         const controls = document.createElement('div');
                         controls.className = 'year-controls';
-
                         const addBeforeBtn = document.createElement('button');
                         addBeforeBtn.textContent = '+';
                         addBeforeBtn.className = 'btn btn-sm btn-outline-info add-year-btn';
                         addBeforeBtn.title = 'Adicionar ano anterior';
                         addBeforeBtn.onclick = (e) => { e.stopPropagation(); this.addYear(index, true); };
-                        
                         const addAfterBtn = document.createElement('button');
                         addAfterBtn.textContent = '+';
                         addAfterBtn.className = 'btn btn-sm btn-outline-info add-year-btn mt-1';
                         addAfterBtn.title = 'Adicionar ano seguinte';
                         addAfterBtn.onclick = (e) => { e.stopPropagation(); this.addYear(index, false); };
-
                         controls.appendChild(addBeforeBtn);
                         controls.appendChild(addAfterBtn);
-
                         const label = document.createElement('label');
                         label.textContent = APP.state.data.labels[index] || `Ponto ${index + 1}`;
                         label.className = 'form-label mb-0';
-
                         const input = document.createElement('input');
                         input.type = 'number';
                         input.value = value;
                         input.className = 'form-control form-control-sm';
-                        
                         const commitChange = () => {
                             const newValue = parseFloat(input.value);
                             if (!isNaN(newValue)) {
@@ -287,8 +458,7 @@
                             } else { input.value = APP.state.data.values[index];}
                         };
                         input.addEventListener('blur', commitChange);
-                        input.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.blur(); } });
-
+                        input.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); input.blur(); } });
                         row.appendChild(controls);
                         row.appendChild(label);
                         row.appendChild(input);
@@ -307,12 +477,15 @@
                     this.rebuildUI();
                 },
                 deleteYear(index) {
-                    if (confirm(`Tem certeza que deseja excluir o ano "${APP.state.data.labels[index]}"?`)) {
-                        APP.state.data.labels.splice(index, 1);
-                        APP.state.data.values.splice(index, 1);
-                        this.rebuildUI();
-                        this.showNotification("Ano excluído.", "info");
-                    }
+                    const label = APP.state.data.labels[index];
+                    this.showModal('Confirmar Exclusão', `Tem certeza que deseja excluir o item "${label}"?`, (confirmed) => {
+                        if (confirmed) {
+                            APP.state.data.labels.splice(index, 1);
+                            APP.state.data.values.splice(index, 1);
+                            this.rebuildUI();
+                            this.showNotification("Item excluído.", "info");
+                        }
+                    }, { confirmClass: 'btn-danger', confirmText: 'Excluir' });
                 },
                 showContextMenu(x, y, index) {
                     this.hideContextMenu(); 
@@ -322,51 +495,113 @@
                     menu.style.left = `${x}px`;
                     const deleteItem = document.createElement('div');
                     deleteItem.className = 'context-menu-item delete';
-                    deleteItem.textContent = 'Excluir Ano';
+                    deleteItem.textContent = 'Excluir Item';
                     deleteItem.onclick = () => { this.deleteYear(index); };
                     menu.appendChild(deleteItem);
                     document.body.appendChild(menu);
                 },
                 hideContextMenu() { const menu = document.getElementById('custom-context-menu'); if (menu) { menu.remove(); } },
-                renameSeries() { const newName = prompt("Digite o novo nome para a série:", APP.state.data.name); if (newName && newName !== APP.state.data.name) { APP.state.data.name = newName; this.updateSettings(); } },
+                renameSeries() {
+                    const currentName = APP.state.data.name;
+                    this.showModal('Renomear Série', {type: 'input', value: currentName}, (newName) => {
+                        if (newName && newName !== currentName) {
+                            APP.state.data.name = newName;
+                            this.updateSettings();
+                        }
+                    });
+                },
                 generateRandomData() {
                     const pointCount = 7, startYear = new Date().getFullYear() - pointCount;
                     const labels = Array.from({length: pointCount}, (_, i) => (startYear + i + 1).toString());
                     const values = Array.from({length: pointCount}, () => Math.floor(Math.random() * 250) + 150);
                     APP.state.data = { name: 'Total de Servidores', labels, values };
                     const c = APP.dom.controls;
-                    c.chartTitle.value = 'Evolução Anual de Servidores'; c.titleColor.value = '#343a40'; c.lineColor.value = '#0d6efd'; c.chartBgColor.value = '#ffffff'; c.titleFontSize.value = 20; c.gridStyle.value = 'dotted'; c.lineStyleSelect.value = 'true';
+                    c.chartTitle.value = 'Evolução Anual de Servidores'; 
+                    c.xAxisTitle.value = 'Ano';
+                    c.yAxisTitle.value = 'Total de Servidores';
+                    c.titleColor.value = '#343a40'; 
+                    c.lineColor.value = '#6c757d'; // Cor padrão da linha
+                    c.chartBgColor.value = '#ffffff'; 
+                    c.titleFontSize.value = 14; // Tamanho da fonte padrão
+                    c.gridStyle.value = 'dotted'; 
+                    c.lineStyleSelect.value = 'true'; 
+                    c.chartType.value = 'line'; 
+                    c.xGridLines.value = 'Auto'; 
+                    c.yGridLines.value = 'Auto'; 
+                    c.yAxisMin.value = ''; 
+                    c.yAxisMax.value = '';
                 },
                 getChartOptions() {
                     const c = APP.dom.controls, isDark = APP.state.theme === 'dark';
                     const gridColor = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
                     const textColor = isDark ? '#ccc' : '#666'; const titleColor = c.titleColor.value;
-                    const gridStyle = c.gridStyle.value; const showGrid = gridStyle !== 'none';
-                    let yAxisSplit = { show: showGrid, lineStyle: { type: gridStyle, color: gridColor } };
-                    const ySplitNum = c.yGridLines.value; if (ySplitNum !== 'Auto') yAxisSplit.splitNumber = parseInt(ySplitNum, 10);
-                    let xAxisSplit = { show: showGrid, lineStyle: { type: gridStyle, color: gridColor } };
+                    const gridStyleValue = c.gridStyle.value; const showGrid = gridStyleValue !== 'none';
+                    const getLineType = (style) => {
+                        switch (style) {
+                            case 'dotted': return [2, 5];
+                            case 'dashed': return [7, 7];
+                            case 'solid': return 'solid';
+                            default: return 'solid';
+                        }
+                    };
+                    const lineType = getLineType(gridStyleValue);
+                    let yAxisSplit = { show: showGrid, lineStyle: { type: lineType, color: gridColor } };
+                    if (c.yGridLines.value !== 'Auto') yAxisSplit.splitNumber = parseInt(c.yGridLines.value, 10);
+                    let xAxisSplit = { show: showGrid, lineStyle: { type: lineType, color: gridColor } };
+                    if (c.xGridLines.value !== 'Auto') xAxisSplit.splitNumber = parseInt(c.xGridLines.value, 10);
                     APP.dom.chartContainer.style.backgroundColor = c.chartBgColor.value;
                     const chartType = c.chartType.value; let series = [];
                     const isSmooth = c.lineStyleSelect.value === 'true';
+                    const titleFontSize = parseInt(c.titleFontSize.value, 10);
 
                     if (chartType === 'pie') {
-                        series.push({ name: APP.state.data.name, type: 'pie', radius: '60%', center: ['50%', '55%'], data: APP.state.data.labels.map((l, i) => ({ value: APP.state.data.values[i], name: l })), itemStyle: { borderRadius: 5, borderColor: c.chartBgColor.value, borderWidth: 2, shadowBlur: 10, shadowOffsetX: 0, shadowOffsetY: 5, shadowColor: 'rgba(0, 0, 0, 0.1)' }, label: { color: textColor } });
+                        series.push({ name: APP.state.data.name, type: 'pie', radius: '60%', center: ['50%', '55%'], data: APP.state.data.labels.map((l, i) => ({ value: APP.state.data.values[i], name: l })), itemStyle: { color: c.lineColor.value, borderRadius: 5, borderColor: c.chartBgColor.value, borderWidth: 2, shadowBlur: 10, shadowOffsetX: 0, shadowOffsetY: 5, shadowColor: 'rgba(0, 0, 0, 0.1)' }, label: { show: true, color: textColor } });
                     } else {
-                        series.push({ name: APP.state.data.name, type: chartType, data: APP.state.data.values, smooth: isSmooth, symbolSize: 8, lineStyle: { color: c.lineColor.value, width: 3, shadowBlur: 10, shadowOffsetX: 0, shadowOffsetY: 5, shadowColor: 'rgba(0, 0, 0, 0.2)' }, itemStyle: { color: c.lineColor.value }, label: { show: true, position: 'top', color: titleColor, fontWeight: 'bold' } });
+                        series.push({ name: APP.state.data.name, type: chartType, data: APP.state.data.values, smooth: isSmooth, symbolSize: 8, lineStyle: { color: c.lineColor.value, width: 3, shadowBlur: 10, shadowOffsetX: 0, shadowOffsetY: 5, shadowColor: 'rgba(0, 0, 0, 0.2)' }, itemStyle: { color: c.lineColor.value }, label: { show: chartType === 'line' || chartType === 'bar', position: 'top', color: titleColor, fontWeight: 'bold' } });
                     }
-                    return { backgroundColor: 'transparent', title: { text: c.chartTitle.value, left: 'center', textStyle: { color: titleColor, fontSize: parseInt(c.titleFontSize.value, 10), fontWeight: 'bold' } }, tooltip: { trigger: 'axis' }, grid: { left: '8%', right: '4%', top: '15%', bottom: '5%', containLabel: true }, toolbox: { feature: { dataView: { readOnly: false }, magicType: { type: ['line', 'bar'] }, restore: {}, saveAsImage: { backgroundColor: c.chartBgColor.value } } }, xAxis: { type: 'category', data: APP.state.data.labels, name: "Anos", nameLocation: 'middle', nameGap: 30, nameTextStyle: { color: titleColor, fontSize: 13, fontWeight: 'bold' }, splitLine: xAxisSplit, axisLine: { lineStyle: { color: gridColor }}, axisLabel: { color: textColor } }, yAxis: { type: 'value', name: APP.state.data.name, nameLocation: 'middle', nameGap: 55, nameTextStyle: { color: titleColor, fontSize: 13, fontWeight: 'bold' }, splitLine: yAxisSplit, axisLine: { lineStyle: { color: gridColor }}, axisLabel: { color: textColor } }, series };
+                    const yMin = parseFloat(c.yAxisMin.value);
+                    const yMax = parseFloat(c.yAxisMax.value);
+                    
+                    return { 
+                        backgroundColor: 'transparent', 
+                        title: { text: c.chartTitle.value, left: 'center', textStyle: { color: titleColor, fontSize: titleFontSize + 4, fontWeight: 'bold' } }, 
+                        tooltip: { trigger: 'axis' }, 
+                        grid: { left: '8%', right: '4%', top: '15%', bottom: '12%', containLabel: true }, 
+                        toolbox: { feature: { dataView: { readOnly: false }, magicType: { type: ['line', 'bar'] }, restore: {}, saveAsImage: { backgroundColor: c.chartBgColor.value } } }, 
+                        xAxis: { type: 'category', data: APP.state.data.labels, name: c.xAxisTitle.value, nameLocation: 'middle', nameGap: 35, nameTextStyle: { color: titleColor, fontSize: titleFontSize, fontWeight: 'bold' }, splitLine: xAxisSplit, axisLine: { lineStyle: { color: gridColor }}, axisLabel: { color: textColor } }, 
+                        yAxis: { type: 'value', name: c.yAxisTitle.value, nameLocation: 'middle', nameGap: 55, nameTextStyle: { color: titleColor, fontSize: titleFontSize, fontWeight: 'bold' }, min: isNaN(yMin) ? null : yMin, max: isNaN(yMax) ? null : yMax, splitLine: yAxisSplit, axisLine: { lineStyle: { color: gridColor }}, axisLabel: { color: textColor } }, 
+                        series 
+                    };
                 },
                 updateChart() { if (APP.state.chart) APP.state.chart.setOption(this.getChartOptions(), true); },
-                toggleTheme() { APP.state.theme = APP.state.theme === 'light' ? 'dark' : 'light'; APP.dom.html.setAttribute('data-bs-theme', APP.state.theme); if (APP.state.chart) { APP.state.chart.dispose(); APP.state.chart = echarts.init(APP.dom.chartContainer, APP.state.theme === 'dark' ? 'dark' : null); } this.rebuildUI(); },
+                toggleTheme() {
+                    APP.state.theme = APP.state.theme === 'light' ? 'dark' : 'light';
+                    APP.dom.html.setAttribute('data-bs-theme', APP.state.theme);
+                    this.updateSettings();
+                },
                 toggleLineStyleControl() {
                     const wrapper = document.getElementById('line-style-control-wrapper');
                     wrapper.style.display = APP.dom.controls.chartType.value === 'line' ? 'block' : 'none';
+                    this.updateSettings();
+                },
+                sendEmail() {
+                    const recipient = 'echolimbo20@gmail.com';
+                    const subject = APP.dom.controls.contactSubject.value;
+                    const message = APP.dom.controls.contactMessage.value;
+                    if (!message.trim()) {
+                        this.showNotification("Por favor, escreva uma mensagem antes de enviar.", "warning");
+                        return;
+                    }
+                    const body = encodeURIComponent(message);
+                    const subjectEnc = encodeURIComponent(`[AllaChart Contato] - ${subject}`);
+                    const mailtoLink = `mailto:${recipient}?subject=${subjectEnc}&body=${body}`;
+                    window.location.href = mailtoLink;
                 },
                 showNotification(message, type = 'primary') { const toastHTML = `<div class="toast align-items-center text-bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true"><div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div></div>`; APP.dom.notificationContainer.insertAdjacentHTML('beforeend', toastHTML); new bootstrap.Toast(APP.dom.notificationContainer.lastElementChild).show();},
                 saveState() { try { const s = { data: APP.state.data, theme: APP.state.theme, controls: {} }; for (const k in APP.dom.controls) { const e = APP.dom.controls[k]; if (e && e.id && typeof e.value !== 'undefined' && e.type !== 'file') s.controls[k] = e.value; } localStorage.setItem('alladinAppState', JSON.stringify(s)); } catch (e) { console.warn("Could not save state.", e); } },
                 loadState() { try { const s = JSON.parse(localStorage.getItem('alladinAppState')); if (s && s.data && s.data.values) { APP.state.data = s.data; APP.state.theme = s.theme || 'light'; APP.dom.html.setAttribute('data-bs-theme', APP.state.theme); if (s.controls) { for (const k in s.controls) { if (APP.dom.controls[k] && s.controls[k] !== undefined) APP.dom.controls[k].value = s.controls[k]; } } this.showNotification("Sessão anterior restaurada!"); } else { this.generateRandomData(); } } catch (e) { this.generateRandomData(); } },
                 handleFileUpload(e) { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = (event) => { try { const wb = XLSX.read(new Uint8Array(event.target.result), { type: 'array' }); const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 }); if (json.length < 2) return this.showNotification('Planilha vazia ou inválida.', 'danger'); const h = json[0], body = json.slice(1); APP.state.data = { name: h[1] || 'Série Importada', labels: body.map(row => String(row[0])), values: body.map(row => parseFloat(row[1]) || 0) }; this.rebuildUI(); this.showNotification('Dados importados com sucesso!', 'success');} catch(err){this.showNotification('Erro ao ler a planilha.', 'danger');}}; r.readAsArrayBuffer(f);},
-                async exportToExcel() { const wb = new ExcelJS.Workbook(), ws = wb.addWorksheet('Relatório'); const img = APP.state.chart.getDataURL({ type: 'png', pixelRatio: 3, backgroundColor: '#FFFFFF' }); const imgId = wb.addImage({ base64: img, extension: 'png' }); ws.addImage(imgId, 'A1:J20'); const startRow = 22, data = APP.state.data; ws.getCell(startRow, 1).value = "Ano"; ws.getCell(startRow, 2).value = data.name; [1, 2].forEach(i => ws.getCell(startRow, i).font = { bold: true, size: 12 }); data.labels.forEach((l, i) => { ws.getCell(startRow + 1 + i, 1).value = isNaN(l) ? l : Number(l); ws.getCell(startRow + 1 + i, 2).value = data.values[i]; }); ws.getColumn(1).width = 20; ws.getColumn(2).width = 20; const buffer = await wb.xlsx.writeBuffer(); const title = APP.dom.controls.chartTitle.value.replace(/[^a-z0-9]/gi, '_').toLowerCase(); saveAs(new Blob([buffer]), `Relatorio_ALLADIN_${title}.xlsx`); },
+                async exportToExcel() { const wb = new ExcelJS.Workbook(), ws = wb.addWorksheet('Relatório'); const img = APP.state.chart.getDataURL({ type: 'png', pixelRatio: 3, backgroundColor: APP.dom.controls.chartBgColor.value }); const imgId = wb.addImage({ base64: img, extension: 'png' }); ws.addImage(imgId, 'A1:J20'); const startRow = 22, data = APP.state.data; ws.getCell(startRow, 1).value = "Ano"; ws.getCell(startRow, 2).value = data.name; [1, 2].forEach(i => ws.getCell(startRow, i).font = { bold: true, size: 12 }); data.labels.forEach((l, i) => { ws.getCell(startRow + 1 + i, 1).value = isNaN(l) ? l : Number(l); ws.getCell(startRow + 1 + i, 2).value = data.values[i]; }); ws.getColumn(1).width = 20; ws.getColumn(2).width = 20; const buffer = await wb.xlsx.writeBuffer(); const title = APP.dom.controls.chartTitle.value.replace(/[^a-z0-9]/gi, '_').toLowerCase(); saveAs(new Blob([buffer]), `Relatorio_AllaChart_${title}.xlsx`); },
                 copyDesignCode() {
                     const c = APP.dom.controls;
                     const design = [c.chartType.value, c.chartTitle.value, c.titleFontSize.value, c.titleColor.value.substring(1), c.lineColor.value.substring(1), c.gridStyle.value, c.chartBgColor.value.substring(1), c.yGridLines.value, c.lineStyleSelect.value];
@@ -374,26 +609,29 @@
                     navigator.clipboard.writeText(designCode).then(() => this.showNotification('Código de Design copiado!', 'success')).catch(() => this.showNotification('Falha ao copiar o código.', 'danger'));
                 },
                 applyDesignCode() {
-                    const designCode = prompt("Cole o Código de Design aqui:");
-                    if (!designCode) return;
-                    try {
-                        const parts = designCode.split('|');
-                        const c = APP.dom.controls;
-                        c.chartType.value = parts[0]; c.chartTitle.value = parts[1]; c.titleFontSize.value = parts[2]; c.titleColor.value = '#' + parts[3]; c.lineColor.value = '#' + parts[4]; c.gridStyle.value = parts[5]; c.chartBgColor.value = '#' + parts[6]; c.yGridLines.value = parts[7]; c.lineStyleSelect.value = parts[8];
-                        this.rebuildUI(); this.toggleLineStyleControl();
-                        this.showNotification('Design aplicado com sucesso!', 'success');
-                    } catch (error) { this.showNotification('Código de Design inválido.', 'danger'); }
+                    this.showModal('Aplicar Código de Design', { type: 'input', placeholder: 'Cole o código aqui' }, (designCode) => {
+                        if (!designCode) return;
+                        try {
+                            const parts = designCode.split('|');
+                            const c = APP.dom.controls;
+                            c.chartType.value = parts[0]; c.chartTitle.value = parts[1]; c.titleFontSize.value = parts[2]; c.titleColor.value = '#' + parts[3]; c.lineColor.value = '#' + parts[4]; c.gridStyle.value = parts[5]; c.chartBgColor.value = '#' + parts[6]; c.yGridLines.value = parts[7]; c.lineStyleSelect.value = parts[8];
+                            this.rebuildUI(); this.toggleLineStyleControl();
+                            this.showNotification('Design aplicado com sucesso!', 'success');
+                        } catch (error) { this.showNotification('Código de Design inválido.', 'danger'); }
+                    });
                 },
                 saveCurrentChart() {
-                    const chartName = prompt("Digite um nome para este gráfico:", APP.dom.controls.chartTitle.value);
-                    if (!chartName) return;
-                    const savedCharts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
-                    const snapshot = { id: Date.now(), name: chartName, data: JSON.parse(JSON.stringify(APP.state.data)), controls: {} };
-                    for (const key in APP.dom.controls) { const e = APP.dom.controls[key]; if (e && e.id && typeof e.value !== 'undefined' && e.type !== 'file') { snapshot.controls[key] = e.value; } }
-                    savedCharts.push(snapshot);
-                    localStorage.setItem('alladinSavedCharts', JSON.stringify(savedCharts));
-                    this.showNotification('Gráfico salvo com sucesso!', 'success');
-                    this.renderSavedChartsList();
+                    this.showModal('Salvar Gráfico', { type: 'input', value: APP.dom.controls.chartTitle.value, label: 'Nome do Gráfico:' }, (chartName) => {
+                        if (!chartName) return;
+                        const savedCharts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
+                        const thumbnail = APP.state.chart.getDataURL({ type: 'png', pixelRatio: 1, backgroundColor: APP.dom.controls.chartBgColor.value });
+                        const snapshot = { id: Date.now(), name: chartName, data: JSON.parse(JSON.stringify(APP.state.data)), thumbnail: thumbnail, controls: {} };
+                        for (const key in APP.dom.controls) { const e = APP.dom.controls[key]; if (e && e.id && typeof e.value !== 'undefined' && e.type !== 'file') { snapshot.controls[key] = e.value; } }
+                        savedCharts.push(snapshot);
+                        localStorage.setItem('alladinSavedCharts', JSON.stringify(savedCharts));
+                        this.showNotification('Gráfico salvo com sucesso!', 'success');
+                        this.renderSavedChartsList();
+                    });
                 },
                 renderSavedChartsList() {
                     const container = APP.dom.controls.savedChartsList;
@@ -403,7 +641,16 @@
                     savedCharts.forEach(chart => {
                         const item = document.createElement('div');
                         item.className = 'saved-chart-item';
-                        item.innerHTML = `<span class="small">${chart.name}</span><div class="btn-group btn-group-sm"><button class="btn btn-outline-primary load-btn" title="Carregar">L</button><button class="btn btn-outline-danger delete-btn" title="Excluir">X</button></div>`;
+                        const thumbnailSrc = chart.thumbnail || 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; // transparent pixel
+                        item.innerHTML = `
+                            <div class="thumbnail-container"><img class="saved-chart-thumbnail" src="${thumbnailSrc}" alt="Prévia"></div>
+                            <span class="saved-chart-name small" title="${chart.name}">${chart.name}</span>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary load-btn" title="Carregar">L</button>
+                                <button class="btn btn-outline-danger delete-btn" title="Excluir">X</button>
+                            </div>
+                            ${chart.thumbnail ? `<div class="saved-chart-preview-pane"><img src="${chart.thumbnail}" alt="Prévia de ${chart.name}"></div>` : ''}
+                        `;
                         item.querySelector('.load-btn').addEventListener('click', () => this.loadSavedChart(chart.id));
                         item.querySelector('.delete-btn').addEventListener('click', () => this.deleteSavedChart(chart.id));
                         container.appendChild(item);
@@ -414,27 +661,82 @@
                     const chartToLoad = savedCharts.find(c => c.id === chartId);
                     if (!chartToLoad) { this.showNotification('Gráfico não encontrado.', 'danger'); return; }
                     APP.state.data = chartToLoad.data;
-                    for (const key in chartToLoad.controls) { if (APP.dom.controls[key]) { APP.dom.controls[key].value = chartToLoad.controls[key]; } }
+                    for (const key in chartToLoad.controls) { if (APP.dom.controls[key] && chartToLoad.controls[key] !== undefined) { APP.dom.controls[key].value = chartToLoad.controls[key]; } }
                     this.rebuildUI(); this.toggleLineStyleControl();
                     this.showNotification(`Gráfico "${chartToLoad.name}" carregado!`, 'success');
                 },
                 deleteSavedChart(chartId) {
-                    if (!confirm("Tem certeza que deseja excluir este gráfico salvo?")) return;
-                    let savedCharts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
-                    savedCharts = savedCharts.filter(c => c.id !== chartId);
-                    localStorage.setItem('alladinSavedCharts', JSON.stringify(savedCharts));
-                    this.renderSavedChartsList();
-                    this.showNotification('Gráfico excluído.', 'info');
+                    this.showModal('Confirmar Exclusão', "Tem certeza que deseja excluir este gráfico salvo?", (confirmed) => {
+                         if (!confirmed) return;
+                        let savedCharts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
+                        savedCharts = savedCharts.filter(c => c.id !== chartId);
+                        localStorage.setItem('alladinSavedCharts', JSON.stringify(savedCharts));
+                        this.renderSavedChartsList();
+                        this.showNotification('Gráfico excluído.', 'info');
+                    }, { confirmClass: 'btn-danger', confirmText: 'Excluir' });
                 },
                 resetToDefault() {
-                    if (confirm("Tem certeza? Todas as alterações e gráficos salvos serão perdidos.")) {
-                        localStorage.removeItem('alladinAppState');
-                        localStorage.removeItem('alladinSavedCharts');
-                        this.generateRandomData();
-                        this.rebuildUI(false);
-                        this.renderSavedChartsList();
-                        this.toggleLineStyleControl();
-                        this.showNotification("Aplicação reiniciada para o padrão.", "info");
+                    this.showModal('Reiniciar para o Padrão', "Tem certeza? O gráfico atual será perdido e a interface reiniciada. Seus gráficos salvos não serão afetados.", (confirmed) => {
+                        if (confirmed) {
+                           localStorage.removeItem('alladinAppState');
+                           this.generateRandomData();
+                           this.rebuildUI(false); 
+                           this.toggleLineStyleControl();
+                           this.showNotification("Aplicação reiniciada para o padrão.", "info");
+                        }
+                    }, { confirmClass: 'btn-warning', confirmText: 'Reiniciar' });
+                },
+                showModal(title, bodyContent, callback, options = {}) {
+                    const { confirmText = 'Confirmar', cancelText = 'Cancelar', confirmClass = 'btn-primary', confirmAction = true, cancelAction = false } = options;
+                    const M = APP.dom.modal;
+                    M.title.textContent = title;
+                    M.body.innerHTML = '';
+
+                    let inputElement = null;
+                    if (typeof bodyContent === 'string') {
+                        M.body.textContent = bodyContent;
+                    } else if (typeof bodyContent === 'object' && bodyContent.type === 'input') {
+                        if(bodyContent.label) {
+                             const label = document.createElement('label');
+                             label.className = 'form-label';
+                             label.textContent = bodyContent.label;
+                             M.body.appendChild(label);
+                        }
+                        inputElement = document.createElement('input');
+                        inputElement.className = 'form-control';
+                        inputElement.type = bodyContent.inputType || 'text';
+                        inputElement.value = bodyContent.value || '';
+                        inputElement.placeholder = bodyContent.placeholder || '';
+                        M.body.appendChild(inputElement);
+                    }
+                    
+                    M.confirmBtn.textContent = confirmText;
+                    M.confirmBtn.className = `btn ${confirmClass}`;
+                    M.el.querySelector('.modal-footer .btn-secondary').textContent = cancelText;
+
+                    const handleConfirm = () => {
+                        const value = inputElement ? inputElement.value : confirmAction;
+                        callback(value);
+                        APP.state.modal.hide();
+                        cleanup();
+                    };
+                    
+                    const handleCancel = () => {
+                         callback(cancelAction);
+                         cleanup();
+                    }
+
+                    const cleanup = () => {
+                         M.confirmBtn.removeEventListener('click', handleConfirm);
+                         M.el.removeEventListener('hidden.bs.modal', handleCancel);
+                    }
+
+                    M.confirmBtn.addEventListener('click', handleConfirm);
+                    M.el.addEventListener('hidden.bs.modal', handleCancel, { once: true });
+
+                    APP.state.modal.show();
+                    if(inputElement) {
+                        setTimeout(() => inputElement.focus(), 500);
                     }
                 }
             }
