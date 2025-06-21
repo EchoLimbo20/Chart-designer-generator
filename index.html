@@ -35,9 +35,10 @@
         .navbar-brand h1 { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 1.5rem; margin: 0; }
         #sidebar { position: sticky; top: 60px; height: calc(100vh - 60px); overflow-y: auto; background-color: var(--bs-body-tertiary); display: flex; flex-direction: column; }
         .accordion { flex-grow: 1; }
-        .accordion-button { font-weight: 500; font-size: 0.95rem; }
+        .accordion-button { font-weight: 500; font-size: 0.9rem; padding: 0.8rem 1rem; }
         .accordion-button:not(.collapsed) { background-color: rgba(var(--bs-primary-rgb), 0.1); }
-        .accordion-body label { font-size: 0.8rem; font-weight: 500; color: var(--bs-secondary-color); }
+        .accordion-body { padding: 0.8rem; }
+        .accordion-body label { font-size: 0.75rem; font-weight: 500; color: var(--bs-secondary-color); }
         #data-input-container { display: flex; flex-direction: column; gap: 0.5rem; max-height: 200px; overflow-y: auto; margin-bottom: 1rem; }
         .data-input-row { display: flex; align-items: center; gap: 0.5rem; border-radius: 0.25rem; }
         .data-input-row .year-controls { display: flex; flex-direction: column; }
@@ -45,14 +46,14 @@
         .data-input-row:hover .add-year-btn { display: inline-block; }
         .data-input-row label { flex-grow: 1; text-align: right; }
         #main-content { flex-grow: 1; padding: 1.5rem; }
-        #chart-container { width: 100%; height: 80vh; min-height: 600px; background-color: var(--bs-body-tertiary); border-radius: 0.375rem; box-shadow: var(--bs-box-shadow-sm); padding: 1rem; transition: background-color 0.3s, border-color 0.3s; }
+        #chart-container { width: 100%; height: 85vh; min-height: 600px; background-color: var(--bs-body-tertiary); border-radius: 0.375rem; box-shadow: var(--bs-box-shadow-sm); padding: 1rem; transition: background-color 0.3s, border-color 0.3s; }
         #notification-container { z-index: 1100; }
         
         /* --- Saved Charts List & Previews --- */
-        .saved-chart-item { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid var(--bs-border-color); }
+        .saved-chart-item { position: relative; display: flex; justify-content: space-between; align-items: center; padding: 0.4rem; border-bottom: 1px solid var(--bs-border-color); }
         .saved-chart-item .thumbnail-container { width: 40px; height: 30px; margin-right: 8px; flex-shrink: 0; background-color: var(--bs-tertiary-bg); border: 1px solid var(--bs-border-color); border-radius: 3px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .saved-chart-item .saved-chart-thumbnail { width: 100%; height: 100%; object-fit: cover; }
-        .saved-chart-item .saved-chart-name { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px; }
+        .saved-chart-item .saved-chart-name { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 8px; font-size: 0.8rem; }
         .saved-chart-preview-pane { display: none; position: absolute; top: 50%; transform: translateY(-50%); left: 100%; margin-left: 15px; z-index: 1200; border: 1px solid var(--bs-border-color); box-shadow: var(--bs-box-shadow-lg); background-color: var(--bs-body-bg); padding: 0.5rem; border-radius: 0.375rem; pointer-events: none; }
         .saved-chart-preview-pane img { max-width: 400px; max-height: 300px; display: block; }
         .saved-chart-item:hover .saved-chart-preview-pane { display: block; }
@@ -85,8 +86,23 @@
         #ai-chat-fab:hover {
             transform: scale(1.1);
         }
+        /* MODIFIED for smaller, corner chat window */
+        #ai-chat-modal .modal-dialog {
+            position: fixed;
+            right: 25px;
+            bottom: 100px; /* Position it above the FAB */
+            width: 400px;
+            max-width: 90vw;
+            margin: 0;
+            z-index: 1055; /* Ensure it's on top */
+        }
+        #ai-chat-modal .modal-content {
+            height: 50vh;
+            max-height: 500px;
+            box-shadow: var(--bs-box-shadow-lg);
+        }
         #ai-chat-modal .modal-body {
-            height: 60vh;
+            height: 100%; /* Occupy space within the resized modal-content */
             display: flex;
             flex-direction: column;
         }
@@ -168,7 +184,7 @@
 
         <div class="container-fluid">
             <div class="row">
-                <aside id="sidebar" class="col-lg-3 p-3">
+                <aside id="sidebar" class="col-lg-2 p-2">
                     <div class="accordion" id="settingsAccordion">
                         <div class="accordion-item">
                             <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSavedCharts">Seus Gráficos</button></h2>
@@ -225,16 +241,16 @@
                         </div>
                         <div class="accordion-item">
                              <h2 class="accordion-header">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHelp">
-                                    🤖 Assistente Alladin
-                                </button>
-                            </h2>
-                            <div id="collapseHelp" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
-                                <div class="accordion-body text-center">
-                                    <p class="small text-muted">Precisa de ajuda ou quer criar um gráfico com comandos? Clique no botão de chat no canto inferior direito para falar com o Alladin!</p>
-                                    <button class="btn btn-primary" id="open-chat-from-sidebar">Abrir Chat</button>
-                                </div>
-                            </div>
+                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHelp">
+                                     🐶 Assistente Alla
+                                 </button>
+                             </h2>
+                             <div id="collapseHelp" class="accordion-collapse collapse" data-bs-parent="#settingsAccordion">
+                                 <div class="accordion-body text-center">
+                                     <p class="small text-muted">Precisa de ajuda ou quer criar um gráfico com comandos? Clique no botão de chat para falar com o Alla!</p>
+                                     <button class="btn btn-primary" id="open-chat-from-sidebar">Abrir Chat</button>
+                                 </div>
+                             </div>
                         </div>
                         <div class="accordion-item">
                             <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFile">Arquivo</button></h2>
@@ -256,7 +272,7 @@
                         <button id="reset-to-default-btn" class="btn btn-warning">Reiniciar para o Padrão</button>
                     </div>
                 </aside>
-                <main class="col-lg-9 p-4"><div id="chart-container"></div></main>
+                <main class="col-lg-10 p-3"><div id="chart-container"></div></main>
             </div>
         </div>
     </div>
@@ -279,26 +295,26 @@
         </div>
     </div>
     
-    <div id="ai-chat-fab" title="Falar com Alladin">🧞</div>
+    <div id="ai-chat-fab" title="Falar com Alla">🐶</div>
 
     <div class="modal fade" id="ai-chat-modal" tabindex="-1" aria-labelledby="aiChatModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="aiChatModalLabel">Falar com Alladin 🧞</h5>
+                    <h5 class="modal-title" id="aiChatModalLabel">Falar com Alla 🐶</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div id="ai-chat-messages"></div>
                     <div id="ai-typing-indicator" class="mt-2" style="display: none;">
                         <div class="chat-message ai typing-indicator">
-                           <span></span><span></span><span></span>
+                            <span></span><span></span><span></span>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <div class="input-group">
-                        <input type="text" id="ai-chat-input" class="form-control" placeholder="Ex: 'Crie um gráfico de barras azul'..." aria-label="Sua mensagem">
+                        <input type="text" id="ai-chat-input" class="form-control" placeholder="Peça um comando... Ex: 'Crie um gráfico de barras azul'" aria-label="Sua mensagem">
                         <button class="btn btn-primary" type="button" id="ai-chat-send-btn">Enviar</button>
                     </div>
                 </div>
@@ -369,7 +385,6 @@
                     saveChartBtn: document.getElementById('save-chart-btn'),
                     savedChartsList: document.getElementById('saved-charts-list'),
                     resetToDefaultBtn: document.getElementById('reset-to-default-btn'),
-                    // Removido: contactSubject, contactMessage, sendEmailBtn
                     aiChatFab: document.getElementById('ai-chat-fab'),
                     aiChatModal: document.getElementById('ai-chat-modal'),
                     aiChatMessages: document.getElementById('ai-chat-messages'),
@@ -622,7 +637,7 @@
                 },
                 generateRandomData() {
                     const pointCount = 7,
-                        startYear = new Date().getFullYear() - pointCount;
+                          startYear = new Date().getFullYear() - pointCount;
                     const labels = Array.from({
                         length: pointCount
                     }, (_, i) => (startYear + i + 1).toString());
@@ -652,7 +667,7 @@
                 },
                 getChartOptions() {
                     const c = APP.dom.controls,
-                        isDark = APP.state.theme === 'dark';
+                          isDark = APP.state.theme === 'dark';
                     const gridColor = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
                     const textColor = isDark ? '#ccc' : '#666';
                     const titleColor = c.titleColor.value;
@@ -894,7 +909,7 @@
                             });
                             if (json.length < 2) return this.showNotification('Planilha vazia ou inválida.', 'danger');
                             const h = json[0],
-                                body = json.slice(1);
+                                  body = json.slice(1);
                             APP.state.data = {
                                 name: h[1] || 'Série Importada',
                                 labels: body.map(row => String(row[0])),
@@ -910,7 +925,7 @@
                 },
                 async exportToExcel() {
                     const wb = new ExcelJS.Workbook(),
-                        ws = wb.addWorksheet('Relatório');
+                          ws = wb.addWorksheet('Relatório');
                     const img = APP.state.chart.getDataURL({
                         type: 'png',
                         pixelRatio: 3,
@@ -922,7 +937,7 @@
                     });
                     ws.addImage(imgId, 'A1:J20');
                     const startRow = 22,
-                        data = APP.state.data;
+                          data = APP.state.data;
                     ws.getCell(startRow, 1).value = "Ano";
                     ws.getCell(startRow, 2).value = data.name;
                     [1, 2].forEach(i => ws.getCell(startRow, i).font = {
@@ -1172,7 +1187,7 @@
                         messageDiv.className = `chat-message ${messageClass}`;
                         
                         if (isToolMessage) {
-                            messageDiv.innerHTML = `🧞 Executando ação: <strong>${text}</strong>...`;
+                            messageDiv.innerHTML = `🐶 Executando ação: <strong>${text}</strong>...`;
                         } else {
                             messageDiv.innerHTML = sender === 'ai' ? marked.parse(text) : text;
                         }
@@ -1202,7 +1217,7 @@
                         } catch (error) {
                             console.error('Erro ao chamar o backend:', error);
                             this.showTyping(false);
-                            this.addMessage('Desculpe, não consegui me conectar com meu gênio interior. Verifique se a chave de API está configurada corretamente e tente novamente.', 'ai');
+                            this.addMessage('Desculpe, ocorreu um erro de comunicação. Por favor, verifique a chave de API e tente novamente.', 'ai');
                         }
                     },
                     async callBackend(prompt) {
