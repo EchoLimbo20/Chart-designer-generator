@@ -86,15 +86,14 @@
         #ai-chat-fab:hover {
             transform: scale(1.1);
         }
-        /* MODIFIED for smaller, corner chat window */
         #ai-chat-modal .modal-dialog {
             position: fixed;
             right: 25px;
-            bottom: 100px; /* Position it above the FAB */
+            bottom: 100px;
             width: 400px;
             max-width: 90vw;
             margin: 0;
-            z-index: 1055; /* Ensure it's on top */
+            z-index: 1055;
         }
         #ai-chat-modal .modal-content {
             height: 50vh;
@@ -102,7 +101,7 @@
             box-shadow: var(--bs-box-shadow-lg);
         }
         #ai-chat-modal .modal-body {
-            height: 100%; /* Occupy space within the resized modal-content */
+            height: 100%;
             display: flex;
             flex-direction: column;
         }
@@ -117,7 +116,7 @@
             margin-bottom: 10px;
             padding: 8px 12px;
             border-radius: 18px;
-            max-width: 80%;
+            max-width: 85%;
             word-wrap: break-word;
             line-height: 1.4;
         }
@@ -314,7 +313,7 @@
                 </div>
                 <div class="modal-footer">
                     <div class="input-group">
-                        <input type="text" id="ai-chat-input" class="form-control" placeholder="Peça um comando... Ex: 'Crie um gráfico de barras azul'" aria-label="Sua mensagem">
+                        <input type="text" id="ai-chat-input" class="form-control" placeholder="Peça um comando... Ex: 'Mude o título'" aria-label="Sua mensagem">
                         <button class="btn btn-primary" type="button" id="ai-chat-send-btn">Enviar</button>
                     </div>
                 </div>
@@ -1170,8 +1169,16 @@
                     history: [],
                     init() {
                         const controls = APP.dom.controls;
-                        controls.aiChatFab.addEventListener('click', () => APP.state.aiChatModal.show());
-                        controls.openChatFromSidebar.addEventListener('click', () => APP.state.aiChatModal.show());
+                        const openChatAndGreet = () => {
+                            APP.state.aiChatModal.show();
+                            if (this.history.length === 0) {
+                                const welcomeMessage = "Olá! Sou seu assistente de gráficos. Posso **analisar seu gráfico atual** e **fazer alterações** para você. Diga-me o que você precisa! Por exemplo:\n\n* _'Mude o título para Vendas Trimestrais'_\n* _'Qual o valor para o ano de 2024?'_\n* _'Adicione o ano de 2026 com o valor 500'_";
+                                this.addMessage(welcomeMessage, 'ai');
+                                this.history.push({ role: 'model', parts: [{ text: 'Initial greeting sent.' }]});
+                            }
+                        };
+                        controls.aiChatFab.addEventListener('click', openChatAndGreet);
+                        controls.openChatFromSidebar.addEventListener('click', openChatAndGreet);
                         controls.aiChatSendBtn.addEventListener('click', () => this.handleUserInput());
                         controls.aiChatInput.addEventListener('keypress', (e) => {
                             if (e.key === 'Enter') {
@@ -1179,6 +1186,24 @@
                                 this.handleUserInput();
                             }
                         });
+                    },
+                    getCurrentChartState() {
+                        const c = APP.dom.controls;
+                        const data = APP.state.data;
+                        return {
+                            title: c.chartTitle.value,
+                            type: c.chartType.value,
+                            seriesName: data.name,
+                            xAxisTitle: c.xAxisTitle.value,
+                            yAxisTitle: c.yAxisTitle.value,
+                            color: c.lineColor.value,
+                            backgroundColor: c.chartBgColor.value,
+                            gridStyle: c.gridStyle.value,
+                            data: {
+                                labels: data.labels,
+                                values: data.values
+                            }
+                        };
                     },
                     addMessage(text, sender, isToolMessage = false) {
                         const messageContainer = APP.dom.controls.aiChatMessages;
@@ -1221,10 +1246,11 @@
                         }
                     },
                     async callBackend(prompt) {
+                        const currentChartState = this.getCurrentChartState();
                         this.history.push({
                             role: 'user',
                             parts: [{
-                                text: prompt
+                                text: `User prompt: "${prompt}"\n\nCurrent chart context: ${JSON.stringify(currentChartState)}`
                             }]
                         });
                         const response = await fetch('/api/chat', {
@@ -1251,28 +1277,71 @@
                         const { name, args } = toolCall;
                         this.addMessage(name, 'ai', true);
                         let success = false;
+                        
                         switch (name) {
-                            case 'generateRandomChart':
-                                APP.methods.generateRandomData();
-                                APP.methods.rebuildUI();
-                                success = true;
-                                break;
-                            case 'changeChartColor':
-                                if (args.color) {
-                                    APP.dom.controls.lineColor.value = args.color;
-                                    APP.methods.updateSettings();
-                                    success = true;
+                            case 'changeChartProperty':
+                                if (args.property && args.value !== undefined) {
+                                    const c = APP.dom.controls;
+                                    let controlToUpdate;
+                                    switch(args.property.toLowerCase()) {
+                                        case 'title': controlToUpdate = c.chartTitle; break;
+                                        case 'xaxistitle': controlToUpdate = c.xAxisTitle; break;
+                                        case 'yaxistitle': controlToUpdate = c.yAxisTitle; break;
+                                        case 'type': controlToUpdate = c.chartType; break;
+                                        case 'backgroundcolor': controlToUpdate = c.chartBgColor; break;
+                                        case 'gridstyle': controlToUpdate = c.gridStyle; break;
+                                        case 'color': controlToUpdate = c.lineColor; break;
+                                        case 'seriesname': APP.state.data.name = args.value; success = true; break;
+                                    }
+                                    if(controlToUpdate) {
+                                        controlToUpdate.value = args.value;
+                                        success = true;
+                                    }
+                                    if (success) {
+                                        APP.methods.updateSettings();
+                                        if(args.property === 'type') APP.methods.toggleLineStyleControl();
+                                    }
                                 }
                                 break;
-                            case 'setChartData':
-                                if (args.labels && args.values && args.labels.length === args.values.length) {
-                                    APP.state.data.labels = args.labels.map(String);
-                                    APP.state.data.values = args.values.map(Number);
+                            case 'updateDataPoint':
+                                if (args.label && args.newValue !== undefined) {
+                                    const dataIndex = APP.state.data.labels.findIndex(l => l === String(args.label));
+                                    if (dataIndex !== -1) {
+                                        APP.state.data.values[dataIndex] = Number(args.newValue);
+                                        APP.methods.rebuildUI();
+                                        success = true;
+                                    }
+                                }
+                                break;
+                            case 'addDataPoint':
+                                if (args.label && args.value !== undefined) {
+                                    APP.state.data.labels.push(String(args.label));
+                                    APP.state.data.values.push(Number(args.value));
                                     APP.methods.rebuildUI();
                                     success = true;
                                 }
                                 break;
+                            case 'removeDataPoint':
+                                if (args.label) {
+                                    const dataIndex = APP.state.data.labels.findIndex(l => l === String(args.label));
+                                    if (dataIndex !== -1) {
+                                        APP.state.data.labels.splice(dataIndex, 1);
+                                        APP.state.data.values.splice(dataIndex, 1);
+                                        APP.methods.rebuildUI();
+                                        success = true;
+                                    }
+                                }
+                                break;
+                             case 'setChartData':
+                                 if (args.labels && args.values && args.labels.length === args.values.length) {
+                                     APP.state.data.labels = args.labels.map(String);
+                                     APP.state.data.values = args.values.map(Number);
+                                     APP.methods.rebuildUI();
+                                     success = true;
+                                 }
+                                 break;
                         }
+
                         this.history.push({
                             role: 'function',
                             parts: [{
