@@ -51,14 +51,14 @@ export default async function handler(req, res) {
     const { history } = req.body;
     
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-1.5-flash-latest", // <-- AQUI ESTÁ A CORREÇÃO
       // Instrução principal para a IA
       systemInstruction: `Você é Alladin, um gênio assistente dentro do aplicativo web AllaChart. Seu objetivo é ajudar os usuários a criar e customizar gráficos. Seja amigável e prestativo.
       - Responda a dúvidas gerais sobre como usar a aplicação.
       - Se o usuário pedir uma ação que você pode executar com uma ferramenta, chame a ferramenta.
       - Depois de executar uma ferramenta, confirme a ação para o usuário de forma amigável. Ex: 'Prontinho! Mudei a cor para um azul vibrante.' ou 'Ok, gerei um novo gráfico aleatório para você começar.'.
       - Se o usuário fornecer dados incompletos para 'setChartData', peça educadamente pelos dados que faltam em vez de tentar adivinhar.
-      - Hoje é ${new Date().toLocaleDateString('pt-BR')}.`,
+      - A data de hoje é ${new Date().toLocaleDateString('pt-BR')}.`,
       tools,
     });
 
