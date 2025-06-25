@@ -124,7 +124,13 @@
             transform: translateY(-8px); 
             box-shadow: 0 0.5rem 1.5rem rgba(var(--bs-primary-rgb), 0.1); 
         }
-        .gallery-card-img { width: 100%; height: 200px; object-fit: cover; background-color: var(--dark-purple-bg); }
+        .gallery-card-img { 
+            width: 100%; 
+            height: 200px; 
+            object-fit: cover; 
+            background-color: var(--dark-purple-bg);
+            cursor: pointer;
+        }
         .gallery-card .card-body { position: relative; }
         .gallery-card-icon { position: absolute; top: -25px; right: 15px; background-color: var(--bs-primary); color: var(--bs-body-bg); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: var(--bs-box-shadow-sm); border: 2px solid var(--bs-tertiary-bg); }
 
@@ -1328,7 +1334,7 @@
                         }
                     } else {
                         // Root view: show folders first, then unfiled charts
-                        const filedChartIds = new Set(allFolders.flatMap(f => f.chartIds));
+                        const filedChartIds = new Set(allFolders.flatMap(f => f.chartIds || []));
                         const unfiledCharts = allCharts.filter(c => !filedChartIds.has(c.id));
                         itemsToDisplay = [...allFolders, ...unfiledCharts];
                     }
@@ -1363,7 +1369,7 @@
                                  <button class="btn btn-sm btn-outline-secondary border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="bi bi-three-dots-vertical"></i>
                                  </button>
-                                 <ul class="dropdown-menu">
+                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item rename-folder-btn" href="#"><i class="bi bi-pencil me-2"></i>Renomear</a></li>
                                     <li><a class="dropdown-item share-folder-btn" href="#"><i class="bi bi-share me-2"></i>Compartilhar</a></li>
                                     <li><hr class="dropdown-divider"></li>
@@ -1388,17 +1394,30 @@
                      cardCol.innerHTML = `
                          <div class="card h-100 gallery-card shadow-sm">
                              <img src="${thumbnailSrc}" class="card-img-top gallery-card-img" alt="Prévia de ${chart.name}">
-                             <div class="card-body">
+                             <div class="card-body d-flex flex-column">
                                  ${iconHtml}
                                  <h5 class="card-title">${chart.name}</h5>
-                                 <p class="card-text small text-muted">Salvo em: ${new Date(parseInt(chart.id.split('_')[1])).toLocaleDateString()}</p>
-                                 <button class="btn btn-primary load-btn"><i class="bi bi-pencil-square"></i> Editar</button>
-                                 <button class="btn btn-outline-danger delete-btn float-end" title="Excluir"><i class="bi bi-trash"></i></button>
+                                 <p class="card-text small text-muted mb-auto">Salvo em: ${new Date(parseInt(chart.id.split('_')[1])).toLocaleDateString()}</p>
+                                 <div class="d-flex justify-content-between align-items-center mt-3">
+                                     <button class="btn btn-primary load-btn flex-grow-1 me-2"><i class="bi bi-pencil-square"></i> Editar</button>
+                                     <div class="dropdown">
+                                          <button class="btn btn-outline-secondary" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Mais opções">
+                                             <i class="bi bi-three-dots-vertical"></i>
+                                          </button>
+                                          <ul class="dropdown-menu dropdown-menu-end">
+                                             <li><a class="dropdown-item add-to-folder-btn" href="#"><i class="bi bi-folder-plus me-2"></i>Mover para Pasta</a></li>
+                                             <li><hr class="dropdown-divider"></li>
+                                             <li><a class="dropdown-item delete-btn text-danger" href="#"><i class="bi bi-trash me-2"></i>Excluir</a></li>
+                                          </ul>
+                                     </div>
+                                 </div>
                              </div>
                          </div>
                      `;
-                     cardCol.querySelector('.load-btn').addEventListener('click', () => this.loadSavedChart(chart.id, true)); // Pass true to navigate
-                     cardCol.querySelector('.delete-btn').addEventListener('click', () => this.deleteSavedChart(chart.id));
+                     cardCol.querySelector('.gallery-card-img').addEventListener('click', () => this.loadSavedChart(chart.id, true));
+                     cardCol.querySelector('.load-btn').addEventListener('click', () => this.loadSavedChart(chart.id, true));
+                     cardCol.querySelector('.add-to-folder-btn').addEventListener('click', (e) => { e.stopPropagation(); this.showAddToFolderModal(chart.id); });
+                     cardCol.querySelector('.delete-btn').addEventListener('click', (e) => { e.stopPropagation(); this.deleteSavedChart(chart.id); });
                      container.appendChild(cardCol);
                 },
                 loadSavedChart(chartId, navigateToCreator = false) {
@@ -1525,6 +1544,70 @@
                      navigator.clipboard.writeText(shareCode)
                         .then(() => this.showNotification('Código de compartilhamento da pasta copiado!', 'success'))
                         .catch(() => this.showNotification('Falha ao copiar o código.', 'danger'));
+                },
+                addChartToFolder(chartId, folderId) {
+                    let allFolders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
+                    const folder = allFolders.find(f => f.id === folderId);
+
+                    if (!folder) {
+                        this.showNotification('Pasta não encontrada.', 'danger');
+                        return;
+                    }
+                    
+                    // Remove chart from any other folder first to ensure it's a move operation
+                    allFolders.forEach(f => {
+                        if (f.id !== folderId) {
+                            f.chartIds = (f.chartIds || []).filter(id => id !== chartId);
+                        }
+                    });
+
+                    if (!folder.chartIds.includes(chartId)) {
+                        folder.chartIds.push(chartId);
+                        localStorage.setItem('alladinFolders', JSON.stringify(allFolders));
+                        this.showNotification(`Gráfico adicionado à pasta "${folder.name}"!`, 'success');
+                        this.renderHomeGallery(APP.state.currentFolder); // Refresh the gallery view
+                    } else {
+                        this.showNotification('Este gráfico já está nesta pasta.', 'info');
+                    }
+                },
+                showAddToFolderModal(chartId) {
+                    const allFolders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
+                    if (allFolders.length === 0) {
+                        this.showNotification('Você precisa criar uma pasta primeiro!', 'warning');
+                        return;
+                    }
+
+                    let modalBodyHTML = '<p class="mb-2">Selecione a pasta de destino:</p><div class="list-group">';
+                    allFolders.forEach(folder => {
+                        modalBodyHTML += `<button type="button" class="list-group-item list-group-item-action" data-folder-id="${folder.id}">
+                            <i class="bi bi-folder me-2"></i>${folder.name}
+                        </button>`;
+                    });
+                    modalBodyHTML += '</div>';
+                    
+                    const M = APP.dom.modal;
+                    M.title.textContent = 'Mover Gráfico Para Pasta';
+                    M.body.innerHTML = modalBodyHTML;
+                    M.confirmBtn.style.display = 'none';
+                    const cancelBtn = M.el.querySelector('.modal-footer .btn-secondary');
+                    cancelBtn.textContent = 'Fechar';
+
+                    M.body.querySelectorAll('.list-group-item').forEach(button => {
+                        button.addEventListener('click', () => {
+                            const folderId = button.dataset.folderId;
+                            this.addChartToFolder(chartId, folderId);
+                            APP.state.modal.hide();
+                        });
+                    });
+                    
+                    const cleanup = () => {
+                        M.confirmBtn.style.display = 'inline-block';
+                        cancelBtn.textContent = 'Cancelar';
+                        M.el.removeEventListener('hidden.bs.modal', cleanup);
+                    }
+                    M.el.addEventListener('hidden.bs.modal', cleanup, { once: true });
+
+                    APP.state.modal.show();
                 },
                 showModal(title, bodyContent, callback, options = {}) {
                     const { confirmText = 'Confirmar', cancelText = 'Cancelar', confirmClass = 'btn-primary', confirmAction = true, cancelAction = false } = options;
