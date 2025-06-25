@@ -32,15 +32,10 @@
 
             /* Dark Purple Theme Colors */
             --dark-purple-bg: #16141c;
-            /* Roxo bem escuro para o fundo */
             --dark-purple-surface: #201d2b;
-            /* Roxo um pouco mais claro para superfícies */
             --dark-purple-primary: #9f75ff;
-            /* Roxo vivido para acentos */
             --dark-purple-secondary: #87868b;
-            /* Cinza para texto secundário */
             --dark-purple-text: #ffffff;
-            /* Branco para texto principal */
             --dark-purple-border: #363247;
         }
 
@@ -228,6 +223,7 @@
             border: 1px solid var(--bs-border-color);
             background-color: var(--bs-tertiary-bg);
             cursor: grab;
+            position: relative;
         }
         .gallery-card.dragging {
             opacity: 0.5;
@@ -266,6 +262,24 @@
             box-shadow: var(--bs-box-shadow-sm);
             border: 2px solid var(--bs-tertiary-bg);
         }
+        .favorite-star {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 1.5rem;
+            color: #ffc107;
+            cursor: pointer;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+        }
+        .favorite-star:hover {
+            transform: scale(1.2);
+        }
+         .favorite-star .bi-star { display: inline; }
+         .favorite-star .bi-star-fill { display: none; }
+         .favorite-star.is-favorite .bi-star { display: none; }
+         .favorite-star.is-favorite .bi-star-fill { display: inline; }
+
 
         .site-footer {
             padding: 1.5rem;
@@ -291,6 +305,7 @@
         .folder-card-header {
             padding: 1rem 1.25rem;
              border-bottom: 1px solid var(--bs-border-color);
+             cursor: pointer;
         }
 
         .folder-preview-grid {
@@ -312,6 +327,9 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+        .breadcrumb-item a {
+            text-decoration: none;
         }
 
         /* --- Other minor tweaks --- */
@@ -395,13 +413,19 @@
             border-radius: 0.375rem;
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, .15);
             padding: 0.5rem 0;
-            min-width: 150px;
+            min-width: 220px;
         }
 
         .context-menu-item {
             padding: 0.5rem 1rem;
             cursor: pointer;
             font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+        }
+        .context-menu-item i {
+            margin-right: 0.75rem;
+            width: 16px;
         }
 
         .context-menu-item:hover {
@@ -413,10 +437,47 @@
             overflow: hidden;
             background-color: var(--bs-border-color);
         }
+        .color-palette {
+            display: flex;
+            justify-content: space-around;
+            padding: 0.5rem 1rem;
+        }
+        .color-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .color-dot:hover, .color-dot.selected {
+            border-color: var(--bs-primary);
+        }
 
         .context-menu-item.delete {
             color: var(--bs-danger);
         }
+        .context-menu-submenu-container {
+            position: relative;
+        }
+
+        .context-menu-submenu {
+            position: absolute;
+            top: -0.5rem;
+            left: 100%;
+            display: none;
+            background-color: var(--bs-tertiary-bg);
+            border: 1px solid var(--bs-border-color);
+            border-radius: 0.375rem;
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
+            padding: 0.5rem 0;
+            min-width: 180px;
+            z-index: 10002;
+        }
+
+        .context-menu-submenu-container:hover > .context-menu-submenu {
+            display: block;
+        }
+
 
         #ai-chat-fab {
             position: fixed;
@@ -579,16 +640,34 @@
                 </div>
             </div>
             <div class="container gallery-container">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2>Sua Galeria</h2>
-                    <button class="btn btn-success" id="create-folder-btn"><i class="bi bi-folder-plus"></i> Nova Pasta</button>
+                <div id="gallery-header">
+                    <!-- BREADCRUMBS AND SEARCH WILL GO HERE -->
                 </div>
-                <div id="folder-gallery-container">
-                     <!-- Folder Cards will go here -->
+                <div id="favorites-container" class="mb-5" style="display: none;">
+                    <h3 class="mb-4"><i class="bi bi-star-fill text-warning me-2"></i>Favoritos</h3>
+                     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4" id="favorites-gallery-container">
+                    </div>
+                    <hr class="my-5">
                 </div>
+
+                <div id="folders-container">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 id="folders-title">Pastas</h2>
+                        <button class="btn btn-success" id="create-folder-btn"><i class="bi bi-folder-plus"></i> Nova Pasta</button>
+                    </div>
+                    <div id="folder-gallery-container">
+                        <!-- Folder Cards will go here -->
+                    </div>
+                </div>
+
                 <hr class="my-5">
-                <h2 class="mb-4">Gráficos Avulsos</h2>
-                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="chart-gallery-container">
+                
+                <div id="charts-header-container" class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 id="charts-title">Gráficos Avulsos</h2>
+                    <button class="btn btn-success" id="new-chart-in-folder-btn" style="display: none;"><i class="bi bi-plus-lg"></i> Novo Gráfico na Pasta</button>
+                </div>
+
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4" id="chart-gallery-container">
                     <!-- Uncategorized Chart Cards will go here -->
                 </div>
             </div>
@@ -913,15 +992,20 @@
             }, 2800);
 
             const APP = {
-                state: { chart: null, data: {}, theme: 'light', modal: null, aiChatModal: null, iconSelectorModal: null, themeChoiceModal: null, currentView: 'home' },
+                state: { chart: null, data: {}, theme: 'light', modal: null, aiChatModal: null, iconSelectorModal: null, themeChoiceModal: null, currentView: 'home', currentFolderId: null, currentFilter: '' },
                 dom: {
                     html: document.documentElement,
                     chartContainer: document.getElementById('chart-container'),
                     notificationContainer: document.getElementById('notification-container'),
                     homeView: document.getElementById('home-view'),
                     creatorView: document.getElementById('creator-view'),
-                    chartGalleryContainer: document.getElementById('chart-gallery-container'),
+                    galleryHeader: document.getElementById('gallery-header'),
+                    favoritesContainer: document.getElementById('favorites-container'),
+                    favoritesGalleryContainer: document.getElementById('favorites-gallery-container'),
+                    foldersContainer: document.getElementById('folders-container'),
                     folderGalleryContainer: document.getElementById('folder-gallery-container'),
+                    chartGalleryContainer: document.getElementById('chart-gallery-container'),
+                    chartsTitle: document.getElementById('charts-title'),
                     homeBanner: document.getElementById('home-banner'),
                     bannerContent: document.getElementById('banner-content'),
                     modal: {
@@ -949,6 +1033,7 @@
                         homeCreateBtn: document.getElementById('home-create-btn'),
                         homeApplyFolderCodeBtn: document.getElementById('home-apply-folder-code-btn'),
                         createFolderBtn: document.getElementById('create-folder-btn'),
+                        newChartInFolderBtn: document.getElementById('new-chart-in-folder-btn'),
                         chartType: document.getElementById('chart-type'),
                         chartTitle: document.getElementById('chart-title'),
                         titleFontSize: document.getElementById('title-font-size'),
@@ -995,10 +1080,9 @@
                         APP.state.themeChoiceModal = new bootstrap.Modal(APP.dom.themeChoiceModal.el);
 
                         this.bindEventListeners();
-                        this.navigateTo(APP.state.currentView);
+                        this.navigateTo(APP.state.currentView, APP.state.currentFolderId);
                         this.rebuildUI(false);
                         this.renderSavedChartsList();
-                        this.renderHomeGallery();
                         this.populateIconSelector();
                         this.toggleLineStyleControl();
                         this.AI_ASSISTANT.init();
@@ -1024,15 +1108,17 @@
                             content.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
                         });
                     },
-                    navigateTo(viewName) {
+                    navigateTo(viewName, folderId = null) {
                         APP.state.currentView = viewName;
+                        APP.state.currentFolderId = folderId;
+
                         APP.dom.homeView.style.display = 'none';
                         APP.dom.creatorView.style.display = 'none';
 
                         if (viewName === 'home') {
                             APP.dom.homeView.style.display = 'block';
                             this.renderHomeGallery();
-                        } else {
+                        } else if (viewName === 'creator') {
                             APP.dom.creatorView.style.display = 'block';
                             setTimeout(() => {
                                 if (APP.state.chart) APP.state.chart.resize()
@@ -1063,6 +1149,7 @@
                         APP.dom.controls.homeCreateBtn.addEventListener('click', (e) => { e.preventDefault(); this.navigateTo('creator'); });
                         APP.dom.controls.homeApplyFolderCodeBtn.addEventListener('click', () => this.promptForFolderCode());
                         APP.dom.controls.createFolderBtn.addEventListener('click', () => this.createFolder());
+                        APP.dom.controls.newChartInFolderBtn.addEventListener('click', () => this.createNewChartInCurrentFolder());
 
 
                         APP.state.chart.on('click', this.handleChartClick.bind(this));
@@ -1177,7 +1264,7 @@
                             row.className = 'data-input-row';
                             row.addEventListener('contextmenu', (e) => {
                                 e.preventDefault();
-                                this.showContextMenu(e.clientX, e.clientY, index, 'data');
+                                this.showContextMenu(e.clientX, e.clientY, {id: index}, 'data');
                             });
                             const controls = document.createElement('div');
                             controls.className = 'year-controls';
@@ -1259,7 +1346,7 @@
                             confirmText: 'Excluir'
                         });
                     },
-                    showContextMenu(x, y, id, type = 'chart') {
+                    showContextMenu(x, y, context, type = 'chart') {
                         this.hideContextMenu();
                         const menu = document.createElement('div');
                         menu.id = 'custom-context-menu';
@@ -1267,60 +1354,106 @@
                         if (type === 'data') {
                              const deleteItem = document.createElement('div');
                             deleteItem.className = 'context-menu-item delete';
-                            deleteItem.textContent = 'Excluir Item';
-                            deleteItem.onclick = () => {
-                                this.deleteYear(id);
-                            };
+                            deleteItem.innerHTML = '<i class="bi bi-trash"></i> Excluir Item';
+                            deleteItem.onclick = () => this.deleteYear(context.id);
                             menu.appendChild(deleteItem);
                         } else if (type === 'chart') {
                             const folders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
-                             if (folders.length > 0) {
-                                const moveTo = document.createElement('div');
-                                moveTo.className = 'context-menu-item';
-                                moveTo.innerHTML = 'Mover para... <i class="bi bi-chevron-right float-end"></i>';
-                                menu.appendChild(moveTo);
+                            const chart = (JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]')).find(c => c.id === context.id);
 
+                             const favItem = document.createElement('div');
+                            favItem.className = 'context-menu-item';
+                            favItem.innerHTML = `<i class="bi ${chart.isFavorite ? 'bi-star-fill text-warning' : 'bi-star'}"></i> ${chart.isFavorite ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}`;
+                            favItem.onclick = () => this.toggleFavorite(context.id);
+                             menu.appendChild(favItem);
+
+                             const duplicateItem = document.createElement('div');
+                            duplicateItem.className = 'context-menu-item';
+                            duplicateItem.innerHTML = '<i class="bi bi-copy"></i> Duplicar Gráfico';
+                            duplicateItem.onclick = () => this.duplicateChart(context.id);
+                            menu.appendChild(duplicateItem);
+                            
+                             menu.appendChild(new DOMParser().parseFromString('<div class="context-menu-divider"></div>', 'text/html').body.firstChild);
+                            
+                             // "Move To..." submenu
+                            if (folders.length > 0) {
+                                const moveToContainer = document.createElement('div');
+                                moveToContainer.className = 'context-menu-item context-menu-submenu-container';
+                                moveToContainer.innerHTML = '<span><i class="bi bi-folder-symlink"></i> Mover para</span><i class="bi bi-chevron-right ms-auto"></i>';
+                                
                                 const subMenu = document.createElement('div');
-                                subMenu.className = 'custom-context-menu';
-                                subMenu.style.position = 'absolute';
-                                subMenu.style.top = '0';
-                                subMenu.style.left = '100%';
-                                subMenu.style.display = 'none';
+                                subMenu.className = 'context-menu-submenu';
 
-                                folders.forEach(folder => {
-                                    const folderItem = document.createElement('div');
-                                    folderItem.className = 'context-menu-item';
-                                    folderItem.textContent = folder.name;
-                                    folderItem.onclick = (e) => {
+                                if (chart.folderId) {
+                                    const unpinItem = document.createElement('div');
+                                    unpinItem.className = 'context-menu-item';
+                                    unpinItem.innerHTML = '<i class="bi bi-box-arrow-up-left"></i> Remover da Pasta Atual';
+                                    unpinItem.onclick = (e) => {
                                         e.stopPropagation();
-                                        this.moveChartToFolder(id, folder.id);
+                                        this.moveChartToFolder(context.id, null);
                                         this.hideContextMenu();
                                     };
-                                    subMenu.appendChild(folderItem);
+                                    subMenu.appendChild(unpinItem);
+                                    subMenu.appendChild(new DOMParser().parseFromString('<div class="context-menu-divider"></div>', 'text/html').body.firstChild);
+                                }
+                                
+                                folders.forEach(folder => {
+                                    if (folder.id !== chart.folderId) {
+                                        const folderItem = document.createElement('div');
+                                        folderItem.className = 'context-menu-item';
+                                        folderItem.innerHTML = `<i class="bi bi-folder" style="color:${folder.color || 'inherit'}"></i> ${folder.name}`;
+                                        folderItem.onclick = (e) => {
+                                            e.stopPropagation();
+                                            this.moveChartToFolder(context.id, folder.id);
+                                            this.hideContextMenu();
+                                        };
+                                        subMenu.appendChild(folderItem);
+                                    }
                                 });
-                                menu.appendChild(subMenu);
+                                
+                                moveToContainer.appendChild(subMenu);
+                                menu.appendChild(moveToContainer);
+                            }
 
-                                moveTo.onmouseenter = () => { subMenu.style.display = 'block'; };
-                                menu.onmouseleave = () => { subMenu.style.display = 'none'; };
-                                menu.appendChild(new DOMParser().parseFromString('<div class="context-menu-divider"></div>', 'text/html').body.firstChild);
-                             }
-                             const deleteItem = document.createElement('div');
-                             deleteItem.className = 'context-menu-item delete';
-                             deleteItem.innerHTML = '<i class="bi bi-trash me-2"></i>Excluir Gráfico';
-                             deleteItem.onclick = () => this.deleteSavedChart(id);
-                             menu.appendChild(deleteItem);
 
-                        } else if (type === 'folder') {
-                            const shareItem = document.createElement('div');
-                            shareItem.className = 'context-menu-item';
-                            shareItem.innerHTML = '<i class="bi bi-share-fill me-2"></i>Compartilhar Pasta';
-                            shareItem.onclick = () => this.shareFolder(id);
-                            menu.appendChild(shareItem);
-                            
+                             menu.appendChild(new DOMParser().parseFromString('<div class="context-menu-divider"></div>', 'text/html').body.firstChild);
                              const deleteItem = document.createElement('div');
                             deleteItem.className = 'context-menu-item delete';
-                            deleteItem.innerHTML = '<i class="bi bi-trash me-2"></i>Excluir Pasta';
-                            deleteItem.onclick = () => this.deleteFolder(id);
+                            deleteItem.innerHTML = '<i class="bi bi-trash"></i> Excluir Gráfico';
+                            deleteItem.onclick = () => this.deleteSavedChart(context.id);
+                            menu.appendChild(deleteItem);
+
+                        } else if (type === 'folder') {
+                            const renameItem = document.createElement('div');
+                            renameItem.className = 'context-menu-item';
+                            renameItem.innerHTML = '<i class="bi bi-pencil-fill"></i> Renomear Pasta';
+                            renameItem.onclick = () => this.renameFolder(context.id);
+                            menu.appendChild(renameItem);
+
+                            const shareItem = document.createElement('div');
+                            shareItem.className = 'context-menu-item';
+                            shareItem.innerHTML = '<i class="bi bi-share-fill"></i> Compartilhar Pasta';
+                            shareItem.onclick = () => this.shareFolder(context.id);
+                            menu.appendChild(shareItem);
+
+                            const colors = ['#6f42c1', '#fd7e14', '#198754', '#0dcaf0', '#dc3545', '#adb5bd'];
+                            const colorPalette = document.createElement('div');
+                            colorPalette.className = 'color-palette';
+                            colors.forEach(color => {
+                                const dot = document.createElement('div');
+                                dot.className = 'color-dot';
+                                dot.style.backgroundColor = color;
+                                dot.onclick = () => this.setFolderColor(context.id, color);
+                                colorPalette.appendChild(dot);
+                            });
+                            menu.appendChild(new DOMParser().parseFromString('<div class="context-menu-divider"></div>', 'text/html').body.firstChild);
+                            menu.appendChild(colorPalette);
+                            
+                             menu.appendChild(new DOMParser().parseFromString('<div class="context-menu-divider"></div>', 'text/html').body.firstChild);
+                             const deleteItem = document.createElement('div');
+                            deleteItem.className = 'context-menu-item delete';
+                            deleteItem.innerHTML = '<i class="bi bi-trash"></i> Excluir Pasta';
+                            deleteItem.onclick = () => this.deleteFolder(context.id);
                             menu.appendChild(deleteItem);
                         }
 
@@ -1330,21 +1463,27 @@
                         const menuHeight = menu.offsetHeight;
                         const winWidth = window.innerWidth;
                         const winHeight = window.innerHeight;
+                        
+                        let finalX = x;
+                        let finalY = y;
 
                         if (x + menuWidth > winWidth) {
-                            menu.style.left = `${x - menuWidth}px`;
-                            const subMenu = menu.querySelector('.custom-context-menu');
-                            if (subMenu) {
-                                subMenu.style.left = `-${subMenu.offsetWidth}px`;
-                            }
-                        } else {
-                           menu.style.left = `${x}px`;
+                            finalX = x - menuWidth;
                         }
-
                         if (y + menuHeight > winHeight) {
-                            menu.style.top = `${y - menuHeight}px`;
-                        } else {
-                            menu.style.top = `${y}px`;
+                            finalY = y - menuHeight;
+                        }
+                        
+                        menu.style.left = `${finalX}px`;
+                        menu.style.top = `${finalY}px`;
+                        
+                        const subMenu = menu.querySelector('.context-menu-submenu');
+                        if(subMenu){
+                           const subMenuWidth = subMenu.offsetWidth;
+                           if(finalX + menuWidth + subMenuWidth > winWidth){
+                               subMenu.style.left = 'auto';
+                               subMenu.style.right = '100%';
+                           }
                         }
                     },
                     hideContextMenu() {
@@ -1555,6 +1694,7 @@
                                 data: APP.state.data,
                                 theme: APP.state.theme,
                                 currentView: APP.state.currentView,
+                                currentFolderId: APP.state.currentFolderId,
                                 controls: {}
                             };
                             for (const k in APP.dom.controls) {
@@ -1573,6 +1713,7 @@
                                 if (s.data && s.data.values) APP.state.data = s.data;
                                 APP.state.theme = s.theme || 'light';
                                 APP.state.currentView = s.currentView || 'home';
+                                APP.state.currentFolderId = s.currentFolderId || null;
                                 APP.dom.html.setAttribute('data-bs-theme', APP.state.theme);
                                 if (s.controls) {
                                     for (const k in s.controls) {
@@ -1714,7 +1855,8 @@
                                     id: Date.now(),
                                     name: chartName,
                                     icon: chartIcon,
-                                    folderId: null, // New: initially not in a folder
+                                    folderId: APP.state.currentFolderId,
+                                    isFavorite: false,
                                     data: JSON.parse(JSON.stringify(APP.state.data)),
                                     thumbnail: thumbnail,
                                     controls: {}
@@ -1754,7 +1896,7 @@
                             const iconHtml = `<i class="${chart.icon || 'bi-bar-chart-line'} me-2"></i>`;
                             item.innerHTML = `
                                 <div class="thumbnail-container"><img class="saved-chart-thumbnail" src="${thumbnailSrc}" alt="Prévia"></div>
-                                   ${iconHtml}
+                                    ${iconHtml}
                                 <span class="saved-chart-name small" title="${chart.name}">${chart.name}</span>
                                 <div class="btn-group btn-group-sm">
                                     <button class="btn btn-outline-primary load-btn" title="Carregar"><i class="bi bi-box-arrow-in-down"></i></button>
@@ -1768,70 +1910,167 @@
                         });
                     },
                     renderHomeGallery() {
-                        const chartContainer = APP.dom.chartGalleryContainer;
-                        const folderContainer = APP.dom.folderGalleryContainer;
-                        const savedCharts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
-                        const folders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
-
-                        chartContainer.innerHTML = '';
-                        folderContainer.innerHTML = '';
-
-                        // Render Folders
-                        if(folders.length > 0) {
-                            folders.forEach(folder => {
-                                const folderCharts = savedCharts.filter(c => c.folderId === folder.id);
-                                const folderPreviews = folderCharts.slice(0, 4).map(chart => 
-                                    `<div class="folder-preview-item"><img src="${chart.thumbnail}" alt=""></div>`
-                                ).join('');
-
-                                const folderCard = document.createElement('div');
-                                folderCard.className = 'col-12 mb-4';
-                                folderCard.innerHTML = `
-                                    <div class="folder-card" data-folder-id="${folder.id}">
-                                        <div class="folder-card-header d-flex justify-content-between align-items-center">
-                                            <h4 class="mb-0"><i class="bi bi-folder2-open me-2 text-primary"></i> ${folder.name} (${folderCharts.length})</h4>
-                                            <button class="btn btn-sm btn-outline-secondary folder-options-btn" data-folder-id="${folder.id}"><i class="bi bi-three-dots-vertical"></i></button>
-                                        </div>
-                                        <div class="folder-preview-grid">
-                                            ${folderCharts.length > 0 ? folderPreviews : '<p class="text-muted ms-3 small">Arraste um gráfico aqui para adicioná-lo.</p>'}
-                                        </div>
-                                    </div>
-                                `;
-                                folderContainer.appendChild(folderCard);
-                            });
-                        }
-
-
-                        // Render Uncategorized Charts
-                        const uncategorizedCharts = savedCharts.filter(c => !c.folderId);
-                        if (uncategorizedCharts.length === 0 && folders.length === 0) {
-                            chartContainer.innerHTML = '<div class="col-12"><p class="text-muted text-center fs-5 mt-5">Sua galeria está vazia. Clique em "Criar Gráfico" para começar!</p></div>';
+                        this.renderGalleryHeader();
+                        const allCharts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
+                        const allFolders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
+                        const filterText = APP.state.currentFilter.toLowerCase();
+                        
+                        // Filter favorites (only in main view)
+                        const favoriteCharts = APP.state.currentFolderId ? [] : allCharts.filter(c => c.isFavorite && c.name.toLowerCase().includes(filterText));
+                        
+                        // Filter folders and their contents
+                        const filteredFolders = allFolders.filter(f => f.name.toLowerCase().includes(filterText));
+                        
+                        // Filter charts based on current view (folder or main) and search text
+                        let displayedCharts;
+                        if (APP.state.currentFolderId) {
+                            displayedCharts = allCharts.filter(c => c.folderId === APP.state.currentFolderId && c.name.toLowerCase().includes(filterText));
+                            const currentFolder = allFolders.find(f => f.id === APP.state.currentFolderId);
+                            APP.dom.controls.chartsTitle.textContent = currentFolder ? `Gráficos em "${currentFolder.name}"` : 'Gráficos na Pasta';
+                            APP.dom.controls.newChartInFolderBtn.style.display = 'inline-block';
                         } else {
-                            uncategorizedCharts.forEach(chart => {
-                                const cardCol = document.createElement('div');
-                                cardCol.className = 'col';
-                                cardCol.innerHTML = this.createChartCardHTML(chart);
-                                chartContainer.appendChild(cardCol);
-                            });
+                            displayedCharts = allCharts.filter(c => !c.folderId && c.name.toLowerCase().includes(filterText));
+                            APP.dom.controls.chartsTitle.textContent = 'Gráficos Avulsos';
+                             APP.dom.controls.newChartInFolderBtn.style.display = 'none';
                         }
 
+                        // Render Favorites
+                        APP.dom.favoritesContainer.style.display = favoriteCharts.length > 0 ? 'block' : 'none';
+                        this.renderChartList(APP.dom.favoritesGalleryContainer, favoriteCharts);
+
+                        // Render folders only in main view
+                        if (!APP.state.currentFolderId) {
+                            APP.dom.foldersContainer.style.display = 'block';
+                            this.renderFolderList(APP.dom.folderGalleryContainer, filteredFolders, allCharts);
+                        } else {
+                            APP.dom.foldersContainer.style.display = 'none';
+                        }
+                        
+                        // Render charts for the current view
+                        this.renderChartList(APP.dom.chartGalleryContainer, displayedCharts);
+                        
                         // Add event listeners after rendering
                         this.initDragAndDrop();
+                        this.addCardEventListeners();
+                    },
+                    renderGalleryHeader() {
+                         const header = APP.dom.galleryHeader;
+                         const folderId = APP.state.currentFolderId;
+                         const allFolders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
+                         let currentFolder = null;
+                         if (folderId) {
+                             currentFolder = allFolders.find(f => f.id === folderId);
+                         }
+
+                         header.innerHTML = `
+                             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                                 <nav aria-label="breadcrumb">
+                                     <ol class="breadcrumb mb-0 align-items-center">
+                                         <li class="breadcrumb-item"><a href="#" id="breadcrumb-home">Galeria</a></li>
+                                         ${currentFolder ? `<li class="breadcrumb-item active" aria-current="page" style="color: ${currentFolder.color || 'inherit'}; font-weight: 500;">${currentFolder.name}</li>` : ''}
+                                     </ol>
+                                 </nav>
+                                 <div class="input-group" style="max-width: 400px;">
+                                     <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                     <input type="search" id="gallery-search-input" class="form-control" placeholder="Buscar gráficos ou pastas..." value="${APP.state.currentFilter}">
+                                 </div>
+                             </div>
+                         `;
+                         header.querySelector('#breadcrumb-home').addEventListener('click', (e) => {
+                             e.preventDefault();
+                             this.navigateTo('home');
+                         });
+                         const searchInput = header.querySelector('#gallery-search-input');
+                         searchInput.addEventListener('input', (e) => {
+                             APP.state.currentFilter = e.target.value;
+                             this.renderHomeGallery();
+                         });
+                    },
+                    renderFolderList(container, folders, allCharts) {
+                        container.innerHTML = '';
+                        if (folders.length === 0) {
+                             if(APP.state.currentFilter) container.innerHTML = '<p class="text-muted text-center">Nenhuma pasta encontrada.</p>';
+                            return;
+                        }
+                        folders.forEach(folder => {
+                            const folderCharts = allCharts.filter(c => c.folderId === folder.id);
+                            const folderPreviews = folderCharts.slice(0, 4).map(chart =>
+                                `<div class="folder-preview-item"><img src="${chart.thumbnail}" alt=""></div>`
+                            ).join('');
+
+                            const folderCard = document.createElement('div');
+                            folderCard.className = 'col-12 mb-4';
+                            const folderColor = folder.color || 'var(--bs-primary)';
+
+                            folderCard.innerHTML = `
+                                <div class="folder-card" data-folder-id="${folder.id}">
+                                    <div class="folder-card-header d-flex justify-content-between align-items-center">
+                                        <h4 class="mb-0 d-flex align-items-center" style="color: ${folderColor};"><i class="bi bi-folder2-open me-2"></i> ${folder.name} (${folderCharts.length})</h4>
+                                        <button class="btn btn-sm btn-outline-secondary folder-options-btn" data-folder-id="${folder.id}"><i class="bi bi-three-dots-vertical"></i></button>
+                                    </div>
+                                    <div class="folder-preview-grid">
+                                        ${folderCharts.length > 0 ? folderPreviews : '<p class="text-muted ms-3 small">Arraste um gráfico aqui para adicioná-lo.</p>'}
+                                    </div>
+                                </div>
+                            `;
+                            container.appendChild(folderCard);
+
+                            folderCard.querySelector('.folder-card-header').addEventListener('click', (e) => {
+                                 if(!e.target.classList.contains('folder-options-btn') && !e.target.parentElement.classList.contains('folder-options-btn')) {
+                                     this.navigateTo('home', folder.id);
+                                 }
+                            });
+                        });
+                    },
+                    renderChartList(container, charts) {
+                        container.innerHTML = '';
+                         if (charts.length === 0) {
+                             if(APP.state.currentFilter) container.innerHTML = '<div class="col-12"><p class="text-muted text-center">Nenhum gráfico corresponde à sua busca.</p></div>';
+                             else if(container.id === 'chart-gallery-container' && APP.dom.folderGalleryContainer.innerHTML === '') {
+                                 container.innerHTML = '<div class="col-12"><p class="text-muted text-center fs-5 mt-5">Sua galeria está vazia. Clique em "Criar Gráfico" para começar!</p></div>';
+                             }
+                            return;
+                        }
+                        charts.forEach(chart => {
+                            const cardCol = document.createElement('div');
+                            cardCol.className = 'col';
+                            cardCol.innerHTML = this.createChartCardHTML(chart);
+                            container.appendChild(cardCol);
+                        });
+                    },
+                    addCardEventListeners() {
+                        document.querySelectorAll('.gallery-card-container').forEach(card => {
+                            card.addEventListener('contextmenu', (e) => {
+                                e.preventDefault();
+                                this.showContextMenu(e.clientX, e.clientY, { id: parseInt(card.dataset.chartId) }, 'chart');
+                            });
+                        });
                         document.querySelectorAll('.load-btn-gallery').forEach(btn => btn.addEventListener('click', (e) => this.loadSavedChart(parseInt(e.currentTarget.dataset.chartId), true)));
                         document.querySelectorAll('.delete-btn-gallery').forEach(btn => btn.addEventListener('click', (e) => this.deleteSavedChart(parseInt(e.currentTarget.dataset.chartId))));
                         document.querySelectorAll('.folder-options-btn').forEach(btn => btn.addEventListener('click', (e) => {
-                             e.preventDefault();
-                             e.stopPropagation();
-                             this.showContextMenu(e.clientX, e.clientY, parseInt(e.currentTarget.dataset.folderId), 'folder');
+                            e.preventDefault();
+                            e.stopPropagation();
+                            this.showContextMenu(e.clientX, e.clientY, { id: parseInt(e.currentTarget.dataset.folderId) }, 'folder');
                         }));
+                        document.querySelectorAll('.favorite-star').forEach(star => {
+                            star.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                this.toggleFavorite(parseInt(e.currentTarget.dataset.chartId));
+                            });
+                        });
                     },
-                    
                     createChartCardHTML(chart) {
                         const thumbnailSrc = chart.thumbnail || 'https://placehold.co/600x400/eeeeee/cccccc?text=Sem+Pr%C3%A9via';
                         const iconHtml = `<div class="gallery-card-icon"><i class="${chart.icon || 'bi-bar-chart-line'}"></i></div>`;
+                        const favoriteClass = chart.isFavorite ? 'is-favorite' : '';
                         return `
                             <div class="gallery-card-container" data-chart-id="${chart.id}" draggable="true">
                                 <div class="card h-100 gallery-card shadow-sm">
+                                    <span class="favorite-star ${favoriteClass}" data-chart-id="${chart.id}" title="Favoritar">
+                                        <i class="bi bi-star"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                    </span>
                                     <img src="${thumbnailSrc}" class="card-img-top gallery-card-img" alt="Prévia de ${chart.name}" draggable="false">
                                     <div class="card-body">
                                         ${iconHtml}
@@ -1896,11 +2135,16 @@
                     },
                     // --- FOLDER & DRAG-DROP METHODS ---
                     initDragAndDrop() {
-                        const draggables = document.querySelectorAll('#chart-gallery-container .gallery-card-container');
+                        const draggables = document.querySelectorAll('.gallery-card-container'); // All chart cards
                         const droppables = document.querySelectorAll('.folder-card');
 
                         draggables.forEach(draggable => {
                             draggable.addEventListener('dragstart', (e) => {
+                                // Prevent dragging from within a folder view for simplicity
+                                if(APP.state.currentFolderId) {
+                                    e.preventDefault();
+                                    return;
+                                }
                                 draggable.classList.add('dragging');
                                 e.dataTransfer.setData('text/plain', draggable.dataset.chartId);
                             });
@@ -1926,13 +2170,6 @@
                                 this.moveChartToFolder(chartId, folderId);
                             });
                         });
-                         // Add context menu to chart cards (needed after re-render)
-                        document.querySelectorAll('.gallery-card-container').forEach(card => {
-                            card.addEventListener('contextmenu', (e) => {
-                                e.preventDefault();
-                                this.showContextMenu(e.clientX, e.clientY, parseInt(card.dataset.chartId), 'chart');
-                            });
-                        });
                     },
                     createFolder() {
                         this.showModal('Criar Nova Pasta', { type: 'input', label: 'Nome da Pasta:', placeholder: 'Ex: Relatórios Trimestrais' }, (name) => {
@@ -1941,6 +2178,7 @@
                             const newFolder = {
                                 id: Date.now(),
                                 name: name,
+                                color: '#6f42c1' // Default color
                             };
                             folders.push(newFolder);
                             localStorage.setItem('alladinFolders', JSON.stringify(folders));
@@ -1948,34 +2186,92 @@
                             this.renderHomeGallery();
                         });
                     },
-                     deleteFolder(folderId) {
-                        this.showModal('Excluir Pasta', 'Tem certeza? Todos os gráficos nesta pasta ficarão sem categoria.', (confirmed) => {
-                             if (!confirmed) return;
-                             let folders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
-                             let charts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
-
-                             charts.forEach(chart => {
-                                 if(chart.folderId === folderId) {
-                                     chart.folderId = null;
-                                 }
-                             });
-
-                             folders = folders.filter(f => f.id !== folderId);
-
-                             localStorage.setItem('alladinFolders', JSON.stringify(folders));
-                             localStorage.setItem('alladinSavedCharts', JSON.stringify(charts));
-
-                             this.showNotification('Pasta excluída.', 'info');
-                             this.renderHomeGallery();
-                        }, { confirmClass: 'btn-danger', confirmText: 'Excluir' });
+                    createNewChartInCurrentFolder() {
+                        if (!APP.state.currentFolderId) {
+                            this.showNotification("Nenhuma pasta selecionada.", "warning");
+                            return;
+                        }
+                        // Reset to a blank chart but keep the currentFolderId
+                        const currentFolderId = APP.state.currentFolderId;
+                        this.performReset(APP.state.theme); // This will clear currentFolderId
+                        APP.state.currentFolderId = currentFolderId; // Restore it
+                        this.navigateTo('creator', currentFolderId);
+                        this.showNotification("Criando um novo gráfico na pasta atual.", "info");
                     },
-                    moveChartToFolder(chartId, folderId) {
+                     renameFolder(folderId) {
+                         const folders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
+                         const folder = folders.find(f => f.id === folderId);
+                         if (!folder) return;
+
+                         this.showModal('Renomear Pasta', { type: 'input', value: folder.name }, (newName) => {
+                             if (!newName || newName === folder.name) return;
+                             folder.name = newName;
+                             localStorage.setItem('alladinFolders', JSON.stringify(folders));
+                             this.showNotification('Pasta renomeada.', 'success');
+                             this.renderHomeGallery();
+                         });
+                    },
+                     deleteFolder(folderId) {
+                         this.showModal('Excluir Pasta', 'Tem certeza? Todos os gráficos nesta pasta ficarão sem categoria.', (confirmed) => {
+                              if (!confirmed) return;
+                              let folders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
+                              let charts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
+
+                              charts.forEach(chart => {
+                                   if(chart.folderId === folderId) {
+                                       chart.folderId = null;
+                                   }
+                              });
+
+                              folders = folders.filter(f => f.id !== folderId);
+
+                              localStorage.setItem('alladinFolders', JSON.stringify(folders));
+                              localStorage.setItem('alladinSavedCharts', JSON.stringify(charts));
+
+                              this.showNotification('Pasta excluída.', 'info');
+                              this.renderHomeGallery();
+                         }, { confirmClass: 'btn-danger', confirmText: 'Excluir' });
+                    },
+                    moveChartToFolder(chartId, folderId) { // folderId can be null to un-assign
                         let charts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
                         const chartIndex = charts.findIndex(c => c.id === chartId);
                         if (chartIndex > -1) {
                             charts[chartIndex].folderId = folderId;
                             localStorage.setItem('alladinSavedCharts', JSON.stringify(charts));
-                            this.showNotification('Gráfico movido!', 'success');
+                            this.showNotification(folderId ? 'Gráfico movido!' : 'Gráfico removido da pasta.', 'success');
+                            this.renderHomeGallery();
+                        }
+                    },
+                    duplicateChart(chartId) {
+                        let charts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
+                        const originalChart = charts.find(c => c.id === chartId);
+                        if (!originalChart) return;
+
+                        const newChart = JSON.parse(JSON.stringify(originalChart)); // Deep copy
+                        newChart.id = Date.now();
+                        newChart.name = `Cópia de ${originalChart.name}`;
+                        newChart.isFavorite = false; // Duplicates aren't favorited by default
+
+                        charts.push(newChart);
+                        localStorage.setItem('alladinSavedCharts', JSON.stringify(charts));
+                        this.showNotification('Gráfico duplicado!', 'success');
+                        this.renderHomeGallery();
+                    },
+                    toggleFavorite(chartId) {
+                         let charts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
+                         const chartIndex = charts.findIndex(c => c.id === chartId);
+                         if (chartIndex > -1) {
+                             charts[chartIndex].isFavorite = !charts[chartIndex].isFavorite;
+                             localStorage.setItem('alladinSavedCharts', JSON.stringify(charts));
+                             this.renderHomeGallery();
+                         }
+                    },
+                    setFolderColor(folderId, color) {
+                        let folders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
+                        const folderIndex = folders.findIndex(f => f.id === folderId);
+                        if(folderIndex > -1) {
+                            folders[folderIndex].color = color;
+                            localStorage.setItem('alladinFolders', JSON.stringify(folders));
                             this.renderHomeGallery();
                         }
                     },
@@ -2038,14 +2334,14 @@
                             };
 
                             this.showModal(`Importar Pasta Compartilhada`, `Você recebeu a pasta "${payload.folder.name}" com ${payload.charts.length} gráfico(s). Deseja adicioná-la à sua galeria?`, (confirmed) => {
-                                if(!confirmed) {
-                                        const url = new URL(window.location);
-                                        if (url.searchParams.has('share')) {
-                                            url.searchParams.delete('share');
-                                            window.history.replaceState({}, document.title, url.toString());
-                                        }
+                                 if(!confirmed) {
+                                     const url = new URL(window.location);
+                                     if (url.searchParams.has('share')) {
+                                         url.searchParams.delete('share');
+                                         window.history.replaceState({}, document.title, url.toString());
+                                     }
                                     return;
-                                };
+                                 };
 
                                 const folders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
                                 const charts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
