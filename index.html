@@ -590,7 +590,6 @@
                      </div>
                 </div>
             </div>
-
             <div class="container gallery-container">
                 <div class="gallery-header">
                     <nav id="home-breadcrumb-nav" aria-label="breadcrumb"></nav>
@@ -1535,41 +1534,17 @@
                         }
                     },
                     loadState() {
-                        // --- CORRECTED MIGRATION SCRIPT ---
-                        // This now runs BEFORE trying to load the main state.
-                        try {
-                             if (localStorage.getItem('alladinSavedCharts')) {
-                                const oldChartsRaw = localStorage.getItem('alladinSavedCharts');
-                                const oldCharts = JSON.parse(oldChartsRaw);
-                                if (Array.isArray(oldCharts)) {
-                                    const newFileSystem = { 'root': { type: 'folder', id: 'root', name: 'Início', items: oldCharts } };
-                                    oldCharts.forEach(chart => {
-                                        if(chart.id) newFileSystem[chart.id] = chart;
-                                    });
-                                    
-                                    const migratedState = {
-                                        fileSystem: newFileSystem,
-                                        currentPath: ['root'],
-                                        currentView: 'home',
-                                        theme: 'light' // Default theme for migration
-                                        // Other state properties will be default or loaded next
-                                    };
-                                    localStorage.setItem('alladinAppState', JSON.stringify(migratedState));
-                                    localStorage.removeItem('alladinSavedCharts'); // Remove old data after successful migration
-                                    
-                                    // Use a timeout to ensure the DOM is ready for the notification
-                                    setTimeout(() => this.showNotification("Seus gráficos antigos foram migrados para o novo sistema de pastas!", "info"), 500);
-                                }
-                             }
-                        } catch (e) {
-                            console.error("Error during data migration:", e);
-                            // Don't remove old data if migration fails
-                        }
-                        // --- END OF MIGRATION SCRIPT ---
-
                         try {
                             const s = JSON.parse(localStorage.getItem('alladinAppState'));
                             if (s) {
+                                // MIGRATION from old version
+                                if (localStorage.getItem('alladinSavedCharts')) {
+                                     const oldCharts = JSON.parse(localStorage.getItem('alladinSavedCharts'));
+                                     s.fileSystem = { 'root': { type: 'folder', id: 'root', name: 'Início', items: oldCharts } };
+                                     localStorage.removeItem('alladinSavedCharts');
+                                     this.showNotification("Seus gráficos foram migrados para o novo sistema de pastas!", "info");
+                                }
+                                
                                 APP.state.fileSystem = s.fileSystem || { 'root': { type: 'folder', id: 'root', name: 'Início', items: [] } };
                                 if (s.data && s.data.values) APP.state.data = s.data;
                                 APP.state.theme = s.theme || 'light';
@@ -1680,16 +1655,17 @@
                             const decodedString = atob(code);
                             const payload = JSON.parse(decodedString);
 
+                            // CORRECTED VALIDATION
                             if (payload.version !== 1 || !payload.type) {
                                 throw new Error("Formato de código inválido ou versão incompatível.");
                             }
 
                             if (typeCheck && payload.type !== typeCheck) {
-                                throw new Error(`Este código é para um "${payload.type}". Use a área correta.`);
+                                throw new Error(`Este código é para um "${payload.type}". Por favor, use a área correta para importação.`);
                             }
 
                             if (payload.type === 'folder' || payload.type === 'chart') {
-                                this.addSharedItem(payload, true);
+                                this.addSharedItem(payload, true); // The 'true' flag handles ID regeneration
                                 this.renderAllViews();
                                 this.saveState();
                                 this.showNotification(`${payload.type === 'folder' ? 'Pasta' : 'Gráfico'} "${payload.name}" adicionado com sucesso!`, 'success');
@@ -1703,7 +1679,7 @@
                         }
                     },
                     saveCurrentChart() {
-                        let chartIcon = 'bi-bar-chart-line';
+                        let chartIcon = 'bi-bar-chart-line'; // Default icon
 
                         const onIconSelected = (iconClass) => {
                             chartIcon = iconClass;
@@ -1793,6 +1769,7 @@
                         }
                         
                         container.innerHTML = '';
+                        // Sort items to show folders first
                         const items = [...currentFolder.items].sort((a, b) => {
                             if (a.type === 'folder' && b.type !== 'folder') return -1;
                             if (a.type !== 'folder' && b.type === 'folder') return 1;
@@ -1896,8 +1873,10 @@
                     navigateToFolder(folderId) {
                          const pathIndex = APP.state.currentPath.indexOf(folderId);
                          if (pathIndex > -1) {
+                             // If navigating up the tree, slice the path
                             APP.state.currentPath = APP.state.currentPath.slice(0, pathIndex + 1);
                          } else {
+                             // Navigating down
                             APP.state.currentPath.push(folderId);
                          }
                          this.renderAllViews();
@@ -1916,7 +1895,7 @@
                                 APP.dom.controls[key].value = chartToLoad.controls[key];
                             }
                         }
-                        this.rebuildUI(false); // don't save state on load
+                        this.rebuildUI();
                         this.toggleLineStyleControl();
                         this.showNotification(`Gráfico "${chartToLoad.name}" carregado!`, 'success');
 
@@ -1964,7 +1943,7 @@
                         APP.state.fileSystem = { 'root': { type: 'folder', id: 'root', name: 'Início', items: [] } };
                         APP.state.currentPath = ['root'];
                         this.generateRandomData(theme);
-                        this.rebuildUI();
+                        this.rebuildUI(false);
                         this.toggleLineStyleControl();
                         this.navigateTo('creator');
                         this.renderAllViews();
@@ -2078,10 +2057,27 @@
                     },
                     // ---- FOLDER SYSTEM LOGIC ----
                     findItemById(itemId) {
-                         return APP.state.fileSystem[itemId] || null;
+                         if (APP.state.fileSystem[itemId]) {
+                            return APP.state.fileSystem[itemId];
+                        }
+                        // Fallback search (should not be needed if FS is managed properly)
+                        let found = null;
+                        const search = (node) => {
+                            if (node.id === itemId) {
+                                found = node;
+                                return;
+                            }
+                            if (node.type === 'folder' && node.items) {
+                                for(const child of node.items) {
+                                    search(child);
+                                    if(found) return;
+                                }
+                            }
+                        };
+                        search(APP.state.fileSystem.root);
+                        return found;
                     },
                     findParentFolder(itemId) {
-                         if (itemId === 'root') return null;
                          for(const key in APP.state.fileSystem) {
                              const node = APP.state.fileSystem[key];
                              if(node.type === 'folder' && node.items && node.items.some(child => child.id === itemId)) {
@@ -2150,19 +2146,19 @@
                         navigator.clipboard.writeText(shareCode).then(() => this.showNotification(`Código para "${item.name}" copiado!`, 'success')).catch(() => this.showNotification('Falha ao copiar o código.', 'danger'));
                     },
                     addSharedItem(item, isFromShareCode) {
-                        const parentFolderId = isFromShareCode ? 'root' : APP.state.currentPath[APP.state.currentPath.length - 1];
+                        const parentFolderId = APP.state.currentPath[APP.state.currentPath.length - 1];
                         const parentFolder = this.findItemById(parentFolderId);
 
                         if(!parentFolder) {
-                            this.showNotification('Erro: Pasta de destino não encontrada.', 'danger');
+                            this.showNotification('Erro: Pasta atual não encontrada.', 'danger');
                             return;
                         }
                         
                         const idMap = {};
-                        const processItemAndChildren = (currentItem) => {
+                        const processItemAndChildren = (currentItem, isRootOfShare) => {
                             const oldId = currentItem.id;
                             let newId = oldId;
-                            if (isFromShareCode) {
+                            if (isFromShareCode || isRootOfShare) {
                                 newId = `${currentItem.type}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
                             }
                             currentItem.id = newId;
@@ -2171,16 +2167,11 @@
                             APP.state.fileSystem[newId] = currentItem;
                             
                             if (currentItem.type === 'folder' && currentItem.items) {
-                                currentItem.items.forEach(child => processItemAndChildren(child));
+                                currentItem.items.forEach(child => processItemAndChildren(child, true));
                             }
                         };
                         
-                        if(isFromShareCode){
-                            processItemAndChildren(item);
-                        } else {
-                            APP.state.fileSystem[item.id] = item;
-                        }
-
+                        processItemAndChildren(item, isFromShareCode);
                         parentFolder.items.push(item);
                     },
                     // ---- END FOLDER SYSTEM LOGIC ----
