@@ -575,8 +575,7 @@
                     <p>Sua ferramenta definitiva para criar gráficos inteligentes com facilidade.</p>
                     <button class="btn btn-primary btn-lg me-2" id="home-create-btn">Começar a Criar <i
                             class="bi bi-arrow-right-short"></i></button>
-                    <button class="btn btn-outline-secondary btn-lg" id="home-import-btn">Importar Dados <i
-                            class="bi bi-upload"></i></button>
+                    <button class="btn btn-outline-info btn-lg" id="home-apply-folder-code-btn">Tem um código de pasta? <i class="bi bi-folder-symlink"></i></button>
                 </div>
             </div>
             <div class="container gallery-container">
@@ -948,7 +947,7 @@
                     controls: {
                         importBtn: document.getElementById('import-btn'),
                         homeCreateBtn: document.getElementById('home-create-btn'),
-                        homeImportBtn: document.getElementById('home-import-btn'),
+                        homeApplyFolderCodeBtn: document.getElementById('home-apply-folder-code-btn'),
                         createFolderBtn: document.getElementById('create-folder-btn'),
                         chartType: document.getElementById('chart-type'),
                         chartTitle: document.getElementById('chart-title'),
@@ -1062,7 +1061,7 @@
                         APP.dom.nav.homeLink.addEventListener('click', (e) => { e.preventDefault(); this.navigateTo('home'); });
                         APP.dom.nav.creatorLink.addEventListener('click', (e) => { e.preventDefault(); this.navigateTo('creator'); });
                         APP.dom.controls.homeCreateBtn.addEventListener('click', (e) => { e.preventDefault(); this.navigateTo('creator'); });
-                        APP.dom.controls.homeImportBtn.addEventListener('click', () => APP.dom.controls.importBtn.click());
+                        APP.dom.controls.homeApplyFolderCodeBtn.addEventListener('click', () => this.promptForFolderCode());
                         APP.dom.controls.createFolderBtn.addEventListener('click', () => this.createFolder());
 
 
@@ -2004,51 +2003,92 @@
                              this.showNotification('Erro ao copiar o link.', 'danger');
                         });
                     },
+                    promptForFolderCode() {
+                        this.showModal('Aplicar Código da Pasta', {
+                            type: 'input',
+                            placeholder: 'Cole o link de compartilhamento da pasta aqui'
+                        }, (shareUrl) => {
+                            if (!shareUrl) return;
+                            try {
+                                const url = new URL(shareUrl);
+                                const shareCode = url.searchParams.get('share');
+                                if (shareCode) {
+                                    this.importSharedFolder(shareCode);
+                                } else {
+                                    this.showNotification('URL inválida ou código não encontrado.', 'danger');
+                                }
+                            } catch (error) {
+                                // If it's not a full URL, maybe they just pasted the code itself
+                                this.importSharedFolder(shareUrl);
+                            }
+                        });
+                    },
+                    importSharedFolder(shareCode) {
+                        if(!shareCode) {
+                            this.showNotification('Código de compartilhamento inválido.', 'danger');
+                            return;
+                        }
+                        try {
+                            const decodedString = atob(shareCode);
+                            const payload = JSON.parse(decodedString);
 
+                            if(payload.type !== 'folderShare') {
+                                this.showNotification('Este código não é para uma pasta.', 'warning');
+                                return;
+                            };
+
+                            this.showModal(`Importar Pasta Compartilhada`, `Você recebeu a pasta "${payload.folder.name}" com ${payload.charts.length} gráfico(s). Deseja adicioná-la à sua galeria?`, (confirmed) => {
+                                if(!confirmed) {
+                                        const url = new URL(window.location);
+                                        if (url.searchParams.has('share')) {
+                                            url.searchParams.delete('share');
+                                            window.history.replaceState({}, document.title, url.toString());
+                                        }
+                                    return;
+                                };
+
+                                const folders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
+                                const charts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
+
+                                const newFolder = {
+                                    id: Date.now(),
+                                    name: payload.folder.name,
+                                };
+                                folders.push(newFolder);
+
+                                payload.charts.forEach(sharedChart => {
+                                    const newChart = {...sharedChart, id: Date.now() + Math.random(), folderId: newFolder.id};
+                                    charts.push(newChart);
+                                });
+
+                                localStorage.setItem('alladinFolders', JSON.stringify(folders));
+                                localStorage.setItem('alladinSavedCharts', JSON.stringify(charts));
+
+                                this.showNotification('Pasta importada com sucesso!', 'success');
+                                this.renderHomeGallery();
+                                
+                                const url = new URL(window.location);
+                                if (url.searchParams.has('share')) {
+                                    url.searchParams.delete('share');
+                                    window.history.replaceState({}, document.title, url.toString());
+                                }
+                            });
+
+                        } catch(e) {
+                            console.error("Error processing share link", e);
+                            this.showNotification('Link de compartilhamento inválido ou corrompido.', 'danger');
+                            const url = new URL(window.location);
+                            if (url.searchParams.has('share')) {
+                                url.searchParams.delete('share');
+                                window.history.replaceState({}, document.title, url.toString());
+                            }
+                        }
+                    },
                     checkForSharedFolder() {
                         const urlParams = new URLSearchParams(window.location.search);
                         const shareCode = urlParams.get('share');
                         if(!shareCode) return;
-
-                        try {
-                             const decodedString = atob(shareCode);
-                             const payload = JSON.parse(decodedString);
-
-                             if(payload.type !== 'folderShare') return;
-
-                             this.showModal(`Importar Pasta Compartilhada`, `Você recebeu a pasta "${payload.folder.name}" com ${payload.charts.length} gráfico(s). Deseja adicioná-la à sua galeria?`, (confirmed) => {
-                                 if(!confirmed) {
-                                      window.history.replaceState({}, document.title, window.location.pathname);
-                                     return;
-                                 };
-
-                                 const folders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
-                                 const charts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
-
-                                 const newFolder = {
-                                     id: Date.now(),
-                                     name: payload.folder.name,
-                                 };
-                                 folders.push(newFolder);
-
-                                 payload.charts.forEach(sharedChart => {
-                                     const newChart = {...sharedChart, id: Date.now() + Math.random(), folderId: newFolder.id};
-                                     charts.push(newChart);
-                                 });
-
-                                 localStorage.setItem('alladinFolders', JSON.stringify(folders));
-                                 localStorage.setItem('alladinSavedCharts', JSON.stringify(charts));
-
-                                 this.showNotification('Pasta importada com sucesso!', 'success');
-                                 this.renderHomeGallery();
-                                 window.history.replaceState({}, document.title, window.location.pathname);
-                             });
-
-                        } catch(e) {
-                            console.error("Error processing share link", e);
-                            this.showNotification('Link de compartilhamento inválido.', 'danger');
-                            window.history.replaceState({}, document.title, window.location.pathname);
-                        }
+                        this.importSharedFolder(shareCode);
                     },
 
                     showModal(title, bodyContent, callback, options = {}) {
