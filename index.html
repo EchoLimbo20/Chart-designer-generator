@@ -112,16 +112,47 @@
         .gallery-container {
             padding: 3rem 1.5rem;
         }
-
-        .gallery-card { 
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; 
+        
+        /* --- FOLDER AND GALLERY CARDS --- */
+        .gallery-card, .folder-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
             border: 1px solid var(--bs-border-color);
             background-color: var(--bs-tertiary-bg);
+            position: relative;
         }
-        .gallery-card:hover { transform: translateY(-8px); box-shadow: 0 0.5rem 1.5rem rgba(var(--bs-primary-rgb), 0.1); }
+        .gallery-card:hover, .folder-card:hover { 
+            transform: translateY(-8px); 
+            box-shadow: 0 0.5rem 1.5rem rgba(var(--bs-primary-rgb), 0.1); 
+        }
         .gallery-card-img { width: 100%; height: 200px; object-fit: cover; background-color: var(--dark-purple-bg); }
         .gallery-card .card-body { position: relative; }
         .gallery-card-icon { position: absolute; top: -25px; right: 15px; background-color: var(--bs-primary); color: var(--bs-body-bg); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: var(--bs-box-shadow-sm); border: 2px solid var(--bs-tertiary-bg); }
+
+        .folder-card .card-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px; /* Match chart card height */
+            cursor: pointer;
+        }
+        .folder-icon-lg {
+            font-size: 4rem;
+            color: var(--bs-primary);
+        }
+        .folder-options {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        #gallery-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
 
         .site-footer {
             padding: 1.5rem;
@@ -212,9 +243,16 @@
                 </div>
             </div>
             <div class="container gallery-container">
-                <h2 class="mb-4">Sua Galeria de Gráficos</h2>
-                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="chart-gallery-container">
-                    <!-- Cards de Gráficos Salvos irão aqui -->
+                 <div id="gallery-header">
+                    <h2 id="gallery-title" class="mb-0">Sua Galeria</h2>
+                    <div>
+                         <button class="btn btn-secondary me-2" id="gallery-back-btn" style="display: none;"><i class="bi bi-arrow-left"></i> Voltar</button>
+                         <button class="btn btn-primary" id="create-folder-btn"><i class="bi bi-folder-plus"></i> Criar Pasta</button>
+                    </div>
+                </div>
+                <hr>
+                <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4" id="chart-gallery-container">
+                    <!-- Cards de Gráficos e Pastas Salvos irão aqui -->
                 </div>
             </div>
         </div>
@@ -446,7 +484,7 @@
         }, 2800);
 
         const APP = {
-            state: { chart: null, data: {}, theme: 'light', modal: null, aiChatModal: null, iconSelectorModal: null, themeChoiceModal: null, currentView: 'home' },
+            state: { chart: null, data: {}, theme: 'light', modal: null, aiChatModal: null, iconSelectorModal: null, themeChoiceModal: null, currentView: 'home', currentFolder: null },
             dom: {
                 html: document.documentElement,
                 chartContainer: document.getElementById('chart-container'),
@@ -454,6 +492,11 @@
                 homeView: document.getElementById('home-view'),
                 creatorView: document.getElementById('creator-view'),
                 chartGalleryContainer: document.getElementById('chart-gallery-container'),
+                galleryHeader: {
+                    title: document.getElementById('gallery-title'),
+                    backBtn: document.getElementById('gallery-back-btn'),
+                    createFolderBtn: document.getElementById('create-folder-btn')
+                },
                 homeBanner: document.getElementById('home-banner'),
                 bannerContent: document.getElementById('banner-content'),
                 modal: {
@@ -525,10 +568,9 @@
                     APP.state.themeChoiceModal = new bootstrap.Modal(APP.dom.themeChoiceModal.el);
 
                     this.bindEventListeners();
-                    this.navigateTo(APP.state.currentView);
+                    this.navigateTo(APP.state.currentView, APP.state.currentFolder);
                     this.rebuildUI(false); 
                     this.renderSavedChartsList();
-                    this.renderHomeGallery();
                     this.populateIconSelector();
                     this.toggleLineStyleControl();
                     this.AI_ASSISTANT.init();
@@ -554,14 +596,15 @@
                         content.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
                     });
                 },
-                navigateTo(viewName) {
+                navigateTo(viewName, folderId = null) {
                     APP.state.currentView = viewName;
+                    APP.state.currentFolder = folderId;
                     APP.dom.homeView.style.display = 'none';
                     APP.dom.creatorView.style.display = 'none';
 
                     if (viewName === 'home') {
                         APP.dom.homeView.style.display = 'block';
-                        this.renderHomeGallery();
+                        this.renderHomeGallery(folderId);
                     } else {
                         APP.dom.creatorView.style.display = 'block';
                         setTimeout(() => {
@@ -592,6 +635,8 @@
                     APP.dom.nav.creatorLink.addEventListener('click', (e) => { e.preventDefault(); this.navigateTo('creator'); });
                     APP.dom.controls.homeCreateBtn.addEventListener('click', (e) => { e.preventDefault(); this.navigateTo('creator'); });
                     APP.dom.controls.homeImportBtn.addEventListener('click', () => APP.dom.controls.importBtn.click());
+                    APP.dom.galleryHeader.createFolderBtn.addEventListener('click', () => this.createFolder());
+                    APP.dom.galleryHeader.backBtn.addEventListener('click', () => this.navigateTo('home', null));
 
 
                     APP.state.chart.on('click', this.handleChartClick.bind(this));
@@ -988,6 +1033,10 @@
                     APP.state.theme = APP.state.theme === 'light' ? 'dark' : 'light';
                     APP.dom.html.setAttribute('data-bs-theme', APP.state.theme);
                     this.updateSettings();
+                    // Re-render gallery to apply theme to folder/chart cards correctly
+                    if(APP.state.currentView === 'home') {
+                        this.renderHomeGallery(APP.state.currentFolder);
+                    }
                 },
                 toggleLineStyleControl() {
                     const wrapper = document.getElementById('line-style-control-wrapper');
@@ -1006,6 +1055,7 @@
                             data: APP.state.data,
                             theme: APP.state.theme,
                             currentView: APP.state.currentView,
+                            currentFolder: APP.state.currentFolder,
                             controls: {}
                         };
                         for (const k in APP.dom.controls) {
@@ -1024,6 +1074,7 @@
                             if(s.data && s.data.values) APP.state.data = s.data;
                             APP.state.theme = s.theme || 'light';
                             APP.state.currentView = s.currentView || 'home';
+                            APP.state.currentFolder = s.currentFolder || null;
                             APP.dom.html.setAttribute('data-bs-theme', APP.state.theme);
                             if (s.controls) {
                                 for (const k in s.controls) {
@@ -1100,6 +1151,7 @@
                 copyShareCode() {
                     const c = APP.dom.controls;
                     const sharePayload = {
+                        type: 'chart', // Explicitly type as chart
                         version: 1,
                         data: APP.state.data,
                         controls: {}
@@ -1111,7 +1163,7 @@
                         }
                     }
                     const shareCode = btoa(JSON.stringify(sharePayload)); // Base64 encode
-                    navigator.clipboard.writeText(shareCode).then(() => this.showNotification('Código de Compartilhamento copiado!', 'success')).catch(() => this.showNotification('Falha ao copiar o código.', 'danger'));
+                    navigator.clipboard.writeText(shareCode).then(() => this.showNotification('Código de Compartilhamento do Gráfico copiado!', 'success')).catch(() => this.showNotification('Falha ao copiar o código.', 'danger'));
                 },
                 applyShareCode() {
                     this.showModal('Aplicar Código de Compartilhamento', {
@@ -1123,46 +1175,75 @@
                             const decodedString = atob(shareCode); // Base64 decode
                             const payload = JSON.parse(decodedString);
                             
-                            if (payload.version !== 1 || !payload.data || !payload.controls) {
-                                throw new Error("Formato de código inválido.");
+                            if (payload.type === 'folder') {
+                                this.importSharedFolder(payload);
+                            } else {
+                                this.importSharedChart(payload);
                             }
 
-                            APP.state.data = payload.data;
-                            for (const key in payload.controls) {
-                                if (APP.dom.controls[key] && payload.controls[key] !== undefined) {
-                                    APP.dom.controls[key].value = payload.controls[key];
-                                }
-                            }
-                            
-                            this.rebuildUI();
-                            this.toggleLineStyleControl();
-                            this.navigateTo('creator');
-                            this.showNotification('Gráfico e design aplicados com sucesso!', 'success');
                         } catch (error) {
                             console.error(error);
                             this.showNotification('Código de Compartilhamento inválido ou corrompido.', 'danger');
                         }
                     });
                 },
-                saveCurrentChart() {
-                    let chartName = '';
-                    let chartIcon = 'bi-bar-chart-line'; // Default icon
+                importSharedChart(payload) {
+                    if (payload.version !== 1 || !payload.data || !payload.controls) {
+                        throw new Error("Formato de código de gráfico inválido.");
+                    }
+                    APP.state.data = payload.data;
+                    for (const key in payload.controls) {
+                        if (APP.dom.controls[key] && payload.controls[key] !== undefined) {
+                            APP.dom.controls[key].value = payload.controls[key];
+                        }
+                    }
+                    this.rebuildUI();
+                    this.toggleLineStyleControl();
+                    this.navigateTo('creator');
+                    this.showNotification('Gráfico e design aplicados com sucesso!', 'success');
+                },
+                importSharedFolder(payload) {
+                     if (payload.version !== 2 || !payload.folder || !Array.isArray(payload.charts)) {
+                        throw new Error("Formato de código de pasta inválido.");
+                    }
+                    const allCharts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
+                    const allFolders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
 
-                    const onIconSelected = (iconClass) => {
-                        chartIcon = iconClass;
-                        APP.state.iconSelectorModal.hide();
-                        this.showModal('Salvar Gráfico', {
-                            type: 'input',
-                            value: APP.dom.controls.chartTitle.value,
-                            label: 'Nome do Gráfico:'
-                        }, (name) => {
-                            chartName = name;
-                            if (!chartName) return;
-                            
+                    const newFolder = {
+                        id: `folder_${Date.now()}`,
+                        name: `${payload.folder.name} (Cópia)`,
+                        icon: payload.folder.icon || 'bi-folder-fill',
+                        chartIds: []
+                    };
+
+                    payload.charts.forEach(chartData => {
+                        const newChartId = `chart_${Date.now()}_${Math.random()}`;
+                        const newChart = { ...chartData, id: newChartId };
+                        allCharts.push(newChart);
+                        newFolder.chartIds.push(newChartId);
+                    });
+                    
+                    allFolders.push(newFolder);
+                    localStorage.setItem('alladinSavedCharts', JSON.stringify(allCharts));
+                    localStorage.setItem('alladinFolders', JSON.stringify(allFolders));
+
+                    this.renderHomeGallery();
+                    this.showNotification(`Pasta "${newFolder.name}" importada com sucesso!`, 'success');
+                },
+                saveCurrentChart() {
+                    // This function now just saves the chart, organization is done in the gallery.
+                    this.showModal('Salvar Gráfico', {
+                        type: 'input',
+                        value: APP.dom.controls.chartTitle.value,
+                        label: 'Nome do Gráfico:'
+                    }, (chartName) => {
+                        if (!chartName) return;
+
+                        const onIconSelected = (chartIcon) => {
                             const savedCharts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
                             const thumbnail = APP.state.chart.getDataURL({ type: 'png', pixelRatio: 1, backgroundColor: APP.dom.controls.chartBgColor.value });
                             const snapshot = {
-                                id: Date.now(),
+                                id: `chart_${Date.now()}`,
                                 name: chartName,
                                 icon: chartIcon,
                                 data: JSON.parse(JSON.stringify(APP.state.data)),
@@ -1177,17 +1258,19 @@
                             }
                             savedCharts.push(snapshot);
                             localStorage.setItem('alladinSavedCharts', JSON.stringify(savedCharts));
-                            this.showNotification('Gráfico salvo com sucesso!', 'success');
+                            this.showNotification('Gráfico salvo com sucesso! Você pode organizá-lo em uma pasta na galeria.', 'success');
                             this.renderSavedChartsList();
-                            this.renderHomeGallery();
-                        });
-                    };
+                            this.renderHomeGallery(APP.state.currentFolder);
+                            APP.state.iconSelectorModal.hide();
+                        };
+                        
+                        APP.dom.iconModal.el.querySelector('#icon-selector-confirm-btn').onclick = () => {
+                            const selectedIcon = APP.dom.iconModal.grid.querySelector('.selected');
+                            onIconSelected(selectedIcon ? selectedIcon.dataset.icon : 'bi-bar-chart-line');
+                        };
 
-                    APP.dom.iconModal.el.querySelector('#icon-selector-confirm-btn').onclick = () => {
-                        const selectedIcon = APP.dom.iconModal.grid.querySelector('.selected');
-                        onIconSelected(selectedIcon ? selectedIcon.dataset.icon : 'bi-bar-chart-line');
-                    };
-                     APP.state.iconSelectorModal.show();
+                        APP.state.iconSelectorModal.show();
+                    });
                 },
                 renderSavedChartsList() {
                     const container = APP.dom.controls.savedChartsList;
@@ -1213,40 +1296,110 @@
                             ${chart.thumbnail ? `<div class="saved-chart-preview-pane"><img src="${chart.thumbnail}" alt="Prévia de ${chart.name}"></div>` : ''}
                         `;
                         item.querySelector('.load-btn').addEventListener('click', () => this.loadSavedChart(chart.id));
-                        item.querySelector('.delete-btn').addEventListener('click', () => this.deleteSavedChart(chart.id));
+                        item.querySelector('.delete-btn').addEventListener('click', () => this.deleteSavedChart(chart.id, true));
                         container.appendChild(item);
                     });
                 },
-                 renderHomeGallery() {
+                renderHomeGallery(folderId = null) {
                     const container = APP.dom.chartGalleryContainer;
-                    const savedCharts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]').reverse();
+                    const allCharts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
+                    const allFolders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
                     container.innerHTML = '';
-                    if (savedCharts.length === 0) {
-                        container.innerHTML = '<div class="col-12"><p class="text-muted text-center fs-5 mt-5">Sua galeria está vazia. Clique em "Criar Gráfico" para começar!</p></div>';
+
+                    APP.state.currentFolder = folderId;
+                    
+                    // Configure header based on view (root or inside a folder)
+                    if (folderId) {
+                        const folder = allFolders.find(f => f.id === folderId);
+                        APP.dom.galleryHeader.title.textContent = `Pasta: ${folder ? folder.name : 'Desconhecida'}`;
+                        APP.dom.galleryHeader.backBtn.style.display = 'inline-block';
+                        APP.dom.galleryHeader.createFolderBtn.style.display = 'none'; // No subfolders for now
+                    } else {
+                        APP.dom.galleryHeader.title.textContent = 'Sua Galeria';
+                        APP.dom.galleryHeader.backBtn.style.display = 'none';
+                        APP.dom.galleryHeader.createFolderBtn.style.display = 'inline-block';
+                    }
+
+                    let itemsToDisplay = [];
+                    if (folderId) {
+                        const folder = allFolders.find(f => f.id === folderId);
+                        if(folder && folder.chartIds) {
+                            itemsToDisplay = allCharts.filter(c => folder.chartIds.includes(c.id));
+                        }
+                    } else {
+                        // Root view: show folders first, then unfiled charts
+                        const filedChartIds = new Set(allFolders.flatMap(f => f.chartIds));
+                        const unfiledCharts = allCharts.filter(c => !filedChartIds.has(c.id));
+                        itemsToDisplay = [...allFolders, ...unfiledCharts];
+                    }
+
+                    if (itemsToDisplay.length === 0) {
+                        const message = folderId ? 'Esta pasta está vazia.' : 'Sua galeria está vazia. Crie um gráfico ou uma pasta para começar!';
+                        container.innerHTML = `<div class="col-12"><p class="text-muted text-center fs-5 mt-5">${message}</p></div>`;
                         return;
                     }
-                    savedCharts.forEach(chart => {
-                        const cardCol = document.createElement('div');
-                        cardCol.className = 'col';
-                        const thumbnailSrc = chart.thumbnail || 'https://placehold.co/600x400/eeeeee/cccccc?text=Sem+Pr%C3%A9via';
-                        const iconHtml = `<div class="gallery-card-icon"><i class="${chart.icon || 'bi-bar-chart-line'}"></i></div>`;
 
-                        cardCol.innerHTML = `
-                            <div class="card h-100 gallery-card shadow-sm">
-                                <img src="${thumbnailSrc}" class="card-img-top gallery-card-img" alt="Prévia de ${chart.name}">
-                                <div class="card-body">
-                                    ${iconHtml}
-                                    <h5 class="card-title">${chart.name}</h5>
-                                    <p class="card-text small text-muted">Salvo em: ${new Date(chart.id).toLocaleDateString()}</p>
-                                    <button class="btn btn-primary load-btn"><i class="bi bi-pencil-square"></i> Editar</button>
-                                    <button class="btn btn-outline-danger delete-btn float-end" title="Excluir"><i class="bi bi-trash"></i></button>
-                                </div>
-                            </div>
-                        `;
-                        cardCol.querySelector('.load-btn').addEventListener('click', () => this.loadSavedChart(chart.id, true)); // Pass true to navigate
-                        cardCol.querySelector('.delete-btn').addEventListener('click', () => this.deleteSavedChart(chart.id));
-                        container.appendChild(cardCol);
+                    itemsToDisplay.forEach(item => {
+                        // Check if it's a folder by looking for 'chartIds' property
+                        if (item.chartIds) {
+                            this.createFolderCard(item);
+                        } else {
+                            this.createChartCard(item);
+                        }
                     });
+                },
+                createFolderCard(folder) {
+                    const container = APP.dom.chartGalleryContainer;
+                    const cardCol = document.createElement('div');
+                    cardCol.className = 'col';
+                    cardCol.innerHTML = `
+                        <div class="card h-100 folder-card shadow-sm">
+                            <div class="card-body">
+                                <i class="bi bi-folder-fill folder-icon-lg"></i>
+                                <h5 class="card-title mt-3">${folder.name}</h5>
+                                <span class="badge rounded-pill text-bg-secondary">${folder.chartIds.length} Itens</span>
+                            </div>
+                            <div class="folder-options dropdown">
+                                 <button class="btn btn-sm btn-outline-secondary border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                 </button>
+                                 <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item rename-folder-btn" href="#"><i class="bi bi-pencil me-2"></i>Renomear</a></li>
+                                    <li><a class="dropdown-item share-folder-btn" href="#"><i class="bi bi-share me-2"></i>Compartilhar</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item delete-folder-btn text-danger" href="#"><i class="bi bi-trash me-2"></i>Excluir</a></li>
+                                 </ul>
+                            </div>
+                        </div>
+                    `;
+                    cardCol.querySelector('.card-body').addEventListener('click', () => this.navigateTo('home', folder.id));
+                    cardCol.querySelector('.rename-folder-btn').addEventListener('click', (e) => { e.stopPropagation(); this.renameFolder(folder.id); });
+                    cardCol.querySelector('.share-folder-btn').addEventListener('click', (e) => { e.stopPropagation(); this.shareFolder(folder.id); });
+                    cardCol.querySelector('.delete-folder-btn').addEventListener('click', (e) => { e.stopPropagation(); this.deleteFolder(folder.id); });
+                    container.appendChild(cardCol);
+                },
+                createChartCard(chart) {
+                     const container = APP.dom.chartGalleryContainer;
+                     const cardCol = document.createElement('div');
+                     cardCol.className = 'col';
+                     const thumbnailSrc = chart.thumbnail || 'https://placehold.co/600x400/eeeeee/cccccc?text=Sem+Pr%C3%A9via';
+                     const iconHtml = `<div class="gallery-card-icon"><i class="${chart.icon || 'bi-bar-chart-line'}"></i></div>`;
+
+                     cardCol.innerHTML = `
+                         <div class="card h-100 gallery-card shadow-sm">
+                             <img src="${thumbnailSrc}" class="card-img-top gallery-card-img" alt="Prévia de ${chart.name}">
+                             <div class="card-body">
+                                 ${iconHtml}
+                                 <h5 class="card-title">${chart.name}</h5>
+                                 <p class="card-text small text-muted">Salvo em: ${new Date(parseInt(chart.id.split('_')[1])).toLocaleDateString()}</p>
+                                 <button class="btn btn-primary load-btn"><i class="bi bi-pencil-square"></i> Editar</button>
+                                 <button class="btn btn-outline-danger delete-btn float-end" title="Excluir"><i class="bi bi-trash"></i></button>
+                             </div>
+                         </div>
+                     `;
+                     cardCol.querySelector('.load-btn').addEventListener('click', () => this.loadSavedChart(chart.id, true)); // Pass true to navigate
+                     cardCol.querySelector('.delete-btn').addEventListener('click', () => this.deleteSavedChart(chart.id));
+                     container.appendChild(cardCol);
                 },
                 loadSavedChart(chartId, navigateToCreator = false) {
                     const savedCharts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
@@ -1269,14 +1422,23 @@
                         this.navigateTo('creator');
                     }
                 },
-                deleteSavedChart(chartId) {
-                    this.showModal('Confirmar Exclusão', "Tem certeza que deseja excluir este gráfico salvo?", (confirmed) => {
+                deleteSavedChart(chartId, fromSidebar = false) {
+                    this.showModal('Confirmar Exclusão', "Tem certeza que deseja excluir este gráfico salvo? Esta ação é irreversível.", (confirmed) => {
                         if (!confirmed) return;
                         let savedCharts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
+                        let allFolders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
+                        
                         savedCharts = savedCharts.filter(c => c.id !== chartId);
+
+                        allFolders.forEach(folder => {
+                           folder.chartIds = folder.chartIds.filter(id => id !== chartId);
+                        });
+
                         localStorage.setItem('alladinSavedCharts', JSON.stringify(savedCharts));
-                        this.renderSavedChartsList();
-                        this.renderHomeGallery(); // Also update home gallery
+                        localStorage.setItem('alladinFolders', JSON.stringify(allFolders));
+                        
+                        if (fromSidebar) this.renderSavedChartsList();
+                        this.renderHomeGallery(APP.state.currentFolder);
                         this.showNotification('Gráfico excluído.', 'info');
                     }, {
                         confirmClass: 'btn-danger',
@@ -1289,11 +1451,80 @@
                 performReset(theme) {
                     APP.state.themeChoiceModal.hide();
                     localStorage.removeItem('alladinAppState');
+                    // Keep saved charts and folders on reset
+                    // localStorage.removeItem('alladinSavedCharts');
+                    // localStorage.removeItem('alladinFolders');
                     this.generateRandomData(theme);
                     this.rebuildUI(false);
                     this.toggleLineStyleControl();
                     this.navigateTo('creator');
                     this.showNotification("Aplicação reiniciada para o padrão.", "info");
+                },
+                createFolder() {
+                    this.showModal('Criar Nova Pasta', { type: 'input', label: 'Nome da Pasta:', placeholder: 'Ex: Relatórios Trimestrais' }, (folderName) => {
+                        if (folderName) {
+                            const allFolders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
+                            const newFolder = {
+                                id: `folder_${Date.now()}`,
+                                name: folderName,
+                                icon: 'bi-folder-fill',
+                                chartIds: []
+                            };
+                            allFolders.push(newFolder);
+                            localStorage.setItem('alladinFolders', JSON.stringify(allFolders));
+                            this.renderHomeGallery();
+                            this.showNotification(`Pasta "${folderName}" criada!`, 'success');
+                        }
+                    });
+                },
+                renameFolder(folderId) {
+                    const allFolders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
+                    const folder = allFolders.find(f => f.id === folderId);
+                    if (!folder) return;
+
+                    this.showModal('Renomear Pasta', { type: 'input', label: 'Novo nome da pasta:', value: folder.name }, (newName) => {
+                        if (newName && newName !== folder.name) {
+                            folder.name = newName;
+                            localStorage.setItem('alladinFolders', JSON.stringify(allFolders));
+                            this.renderHomeGallery(APP.state.currentFolder);
+                            this.showNotification('Pasta renomeada.', 'success');
+                        }
+                    });
+                },
+                deleteFolder(folderId) {
+                    this.showModal('Excluir Pasta?', 'Tem certeza? Os gráficos dentro desta pasta NÃO serão excluídos e ficarão disponíveis na galeria principal.', (confirmed) => {
+                        if (confirmed) {
+                            let allFolders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
+                            allFolders = allFolders.filter(f => f.id !== folderId);
+                            localStorage.setItem('alladinFolders', JSON.stringify(allFolders));
+                            this.renderHomeGallery(null); // Go back to root
+                            this.showNotification('Pasta excluída.', 'info');
+                        }
+                    }, { confirmClass: 'btn-danger', confirmText: 'Sim, Excluir' });
+                },
+                shareFolder(folderId) {
+                     const allFolders = JSON.parse(localStorage.getItem('alladinFolders') || '[]');
+                     const allCharts = JSON.parse(localStorage.getItem('alladinSavedCharts') || '[]');
+                     const folder = allFolders.find(f => f.id === folderId);
+
+                     if (!folder) return;
+
+                     const chartsInFolder = allCharts.filter(c => folder.chartIds.includes(c.id));
+
+                     const sharePayload = {
+                        type: 'folder',
+                        version: 2,
+                        folder: {
+                            name: folder.name,
+                            icon: folder.icon
+                        },
+                        charts: chartsInFolder // includes full chart data
+                     };
+
+                     const shareCode = btoa(JSON.stringify(sharePayload));
+                     navigator.clipboard.writeText(shareCode)
+                        .then(() => this.showNotification('Código de compartilhamento da pasta copiado!', 'success'))
+                        .catch(() => this.showNotification('Falha ao copiar o código.', 'danger'));
                 },
                 showModal(title, bodyContent, callback, options = {}) {
                     const { confirmText = 'Confirmar', cancelText = 'Cancelar', confirmClass = 'btn-primary', confirmAction = true, cancelAction = false } = options;
@@ -1483,7 +1714,7 @@
                                  if (args.type) {
                                     APP.dom.controls.chartType.value = args.type;
                                     APP.methods.updateSettings();
-                                }
+                                 }
                                 break;
                             case 'updateMultipleDataPoints':
                                 if (args.points && args.points.length > 0) {
